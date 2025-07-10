@@ -15,9 +15,7 @@ import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

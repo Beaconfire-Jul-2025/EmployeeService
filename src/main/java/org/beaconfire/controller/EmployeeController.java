@@ -20,7 +20,6 @@ import java.util.List;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
-    private final EmployeeRepository employeeRepository;
 
     @PostMapping
     public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest request) {
