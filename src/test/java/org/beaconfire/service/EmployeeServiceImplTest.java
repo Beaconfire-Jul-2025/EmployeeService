@@ -1,6 +1,7 @@
 package org.beaconfire.service;
 
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.GetDocumentsResponse;
 import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
@@ -13,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -161,6 +163,54 @@ class EmployeeServiceImplTest {
 
         verify(employeeRepository, times(1)).findById(employeeId);
         verify(employeeRepository, never()).save(any(Employee.class));
+    }
+    @Test
+    void getDocumentsByEmployeeId_Success() {
+        String employeeId = "EMP123";
+
+        PersonalDocument doc1 = new PersonalDocument();
+        doc1.setTitle("Passport");
+        doc1.setPath("https://s3-url/passport");
+        doc1.setComment("Uploaded passport");
+        doc1.setCreateDate(LocalDateTime.now());
+
+        PersonalDocument doc2 = new PersonalDocument();
+        doc2.setTitle("Driver License");
+        doc2.setPath("https://s3-url/license");
+        doc2.setComment("Uploaded license");
+        doc2.setCreateDate(LocalDateTime.now());
+
+        List<PersonalDocument> documentList = new ArrayList<>();
+        documentList.add(doc1);
+        documentList.add(doc2);
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(documentList);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        GetDocumentsResponse response = employeeService.getDocumentsByEmployeeId(employeeId);
+
+        assertNotNull(response);
+        assertEquals(2, response.getDocuments().size());
+        assertEquals("Passport", response.getDocuments().get(0).getTitle());
+        assertEquals("Driver License", response.getDocuments().get(1).getTitle());
+        assertEquals("Documents retrieved", response.getMessage());
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+    }
+
+    // employee 不存在
+    @Test
+    void getDocumentsByEmployeeId_EmployeeNotFound() {
+        String employeeId = "EMP404";
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> employeeService.getDocumentsByEmployeeId(employeeId));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
     }
 
 }

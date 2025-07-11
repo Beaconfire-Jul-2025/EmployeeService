@@ -57,6 +57,11 @@ public class EmployeeController {
         response.put("message", "Document uploaded");
         return ResponseEntity.status(201).body(response);
     }
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<GetDocumentsResponse> getDocuments(@PathVariable("id") String employeeId) {
+        GetDocumentsResponse response = employeeService.getDocumentsByEmployeeId(employeeId);
+        return ResponseEntity.ok(response);
+    }
 
 
 
