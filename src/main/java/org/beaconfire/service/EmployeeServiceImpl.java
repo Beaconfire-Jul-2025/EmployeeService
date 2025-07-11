@@ -2,6 +2,7 @@ package org.beaconfire.service;
 
 import lombok.RequiredArgsConstructor;
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.GetDocumentsResponse;
 import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
@@ -83,6 +84,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employee.getPersonalDocuments().add(document);
         employeeRepository.save(employee);
+    }
+    @Override
+    public GetDocumentsResponse getDocumentsByEmployeeId(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
+
+        List<PersonalDocument> documents = employee.getPersonalDocuments();
+
+        GetDocumentsResponse response = new GetDocumentsResponse();
+        response.setDocuments(documents);
+        response.setMessage("Documents retrieved");
+
+        return response;
     }
 
 

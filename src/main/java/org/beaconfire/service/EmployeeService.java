@@ -1,12 +1,11 @@
 package org.beaconfire.service;
 
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.GetDocumentsResponse;
 import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.model.Employee;
-import org.beaconfire.model.PersonalDocument;
 
-import java.util.List;
 
 public interface EmployeeService {
 
@@ -14,6 +13,7 @@ public interface EmployeeService {
     Employee registerEmployee(CreateEmployeeRequest request);
     Employee updateEmployee(String id, UpdateEmployeeRequest request);
     void uploadDocument(String employeeId, UploadDocumentRequest request);
+    GetDocumentsResponse getDocumentsByEmployeeId(String employeeId);
 
 
 }
