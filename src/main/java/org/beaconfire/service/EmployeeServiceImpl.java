@@ -3,20 +3,24 @@ package org.beaconfire.service;
 import lombok.RequiredArgsConstructor;
 import org.beaconfire.dto.CreateEmployeeRequest;
 import org.beaconfire.dto.UpdateEmployeeRequest;
+import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
+import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 
 public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
+
     @Override
     public Employee getEmployeeById(String id) {
         return employeeRepository.findById(id)
@@ -66,6 +70,21 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return employeeRepository.save(employee);
     }
+    @Override
+    public void uploadDocument(String employeeId, UploadDocumentRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
+
+        PersonalDocument document = new PersonalDocument();
+        document.setTitle(request.getTitle());
+        document.setPath(request.getPath());
+        document.setComment(request.getComment());
+        document.setCreateDate(LocalDateTime.now());
+
+        employee.getPersonalDocuments().add(document);
+        employeeRepository.save(employee);
+    }
+
 
 }
 
