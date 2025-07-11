@@ -104,4 +104,12 @@ class EmployeeServiceImplTest {
         verify(employeeRepository, times(1)).existsByEmail(request.getEmail());
         verify(employeeRepository, never()).save(any(Employee.class));
     }
+
+    @Test
+    void testUpdateEmployee_success() {
+    }
+
+    @Test
+    void testUpdateEmployee_notFound() {
+    }
 }
