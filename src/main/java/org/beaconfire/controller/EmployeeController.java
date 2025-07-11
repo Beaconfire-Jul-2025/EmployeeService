@@ -3,7 +3,6 @@ package org.beaconfire.controller;
 import lombok.RequiredArgsConstructor;
 import org.beaconfire.dto.*;
 import org.beaconfire.model.Employee;
-import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.service.EmployeeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 

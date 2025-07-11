@@ -5,9 +5,7 @@ import org.beaconfire.dto.GetDocumentsResponse;
 import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.model.Employee;
-import org.beaconfire.model.PersonalDocument;
 
-import java.util.List;
 
 public interface EmployeeService {
 
