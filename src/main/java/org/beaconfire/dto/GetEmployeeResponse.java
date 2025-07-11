@@ -12,4 +12,3 @@ public class GetEmployeeResponse {
     private Employee employee;
     private String message;
 }
-
