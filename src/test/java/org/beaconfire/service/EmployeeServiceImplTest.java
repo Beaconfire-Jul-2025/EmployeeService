@@ -1,9 +1,11 @@
 package org.beaconfire.service;
 
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
+import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -112,4 +116,51 @@ class EmployeeServiceImplTest {
     @Test
     void testUpdateEmployee_notFound() {
     }
+
+    @Test
+    void uploadDocument_Success() {
+        String employeeId = "EMP123";
+        UploadDocumentRequest request = new UploadDocumentRequest();
+        request.setTitle("Driver License");
+        request.setPath("https://s3-url");
+        request.setComment("Uploaded new license");
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(new ArrayList<>());
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        employeeService.uploadDocument(employeeId, request);
+
+        // 验证 employee 对象中的文档是否添加成功
+        List<PersonalDocument> documents = employee.getPersonalDocuments();
+        assertNotNull(documents);
+        assertEquals(1, documents.size());
+        PersonalDocument savedDoc = documents.get(0);
+        assertEquals("Driver License", savedDoc.getTitle());
+        assertEquals("https://s3-url", savedDoc.getPath());
+        assertEquals("Uploaded new license", savedDoc.getComment());
+        assertNotNull(savedDoc.getCreateDate());
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, times(1)).save(employee);
+    }
+
+    @Test
+    void uploadDocument_EmployeeNotFound() {
+        String employeeId = "EMP404";
+        UploadDocumentRequest request = new UploadDocumentRequest();
+        request.setTitle("Passport");
+        request.setPath("https://s3-url");
+        request.setComment("Uploaded passport");
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> employeeService.uploadDocument(employeeId, request));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, never()).save(any(Employee.class));
+    }
+
 }
