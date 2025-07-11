@@ -1,15 +1,11 @@
 package org.beaconfire.service;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.beaconfire.dto.CreateEmployeeRequest;
 import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
-import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
 import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
