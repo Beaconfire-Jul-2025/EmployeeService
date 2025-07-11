@@ -1,5 +1,7 @@
 package org.beaconfire.service;
 
+import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
 import org.beaconfire.repository.EmployeeRepository;
@@ -55,5 +57,51 @@ class EmployeeServiceImplTest {
         assertThrows(EmployeeNotFoundException.class, () -> employeeService.getEmployeeById(id));
 
         verify(employeeRepository, times(1)).findById(id);
+    }
+    @Test
+    void registerEmployee_Success() {
+        CreateEmployeeRequest request = new CreateEmployeeRequest();
+        request.setUserId("AUTH123");
+        request.setFirstName("Alice");
+        request.setLastName("Smith");
+        request.setMiddleName("M");
+        request.setEmail("alice@example.com");
+
+        when(employeeRepository.existsByEmail(request.getEmail())).thenReturn(false);
+
+        Employee savedEmployee = new Employee();
+        savedEmployee.setId("generatedId");
+        savedEmployee.setUserId(request.getUserId());
+        savedEmployee.setFirstName(request.getFirstName());
+        savedEmployee.setLastName(request.getLastName());
+        savedEmployee.setMiddleName(request.getMiddleName());
+        savedEmployee.setEmail(request.getEmail());
+
+        when(employeeRepository.save(any(Employee.class))).thenReturn(savedEmployee);
+
+        Employee result = employeeService.registerEmployee(request);
+
+        assertNotNull(result);
+        assertEquals("generatedId", result.getId());
+        assertEquals("Alice", result.getFirstName());
+        assertEquals("Smith", result.getLastName());
+        assertEquals("M", result.getMiddleName());
+        assertEquals("alice@example.com", result.getEmail());
+
+        verify(employeeRepository, times(1)).existsByEmail(request.getEmail());
+        verify(employeeRepository, times(1)).save(any(Employee.class));
+    }
+
+    @Test
+    void registerEmployee_EmailExists() {
+        CreateEmployeeRequest request = new CreateEmployeeRequest();
+        request.setEmail("existing@example.com");
+
+        when(employeeRepository.existsByEmail(request.getEmail())).thenReturn(true);
+
+        assertThrows(EmployeeAlreadyExistsException.class, () -> employeeService.registerEmployee(request));
+
+        verify(employeeRepository, times(1)).existsByEmail(request.getEmail());
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 }
