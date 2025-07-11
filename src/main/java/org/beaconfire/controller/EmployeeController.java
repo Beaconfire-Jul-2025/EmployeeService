@@ -5,12 +5,14 @@ import lombok.RequiredArgsConstructor;
 
 import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.beaconfire.service.EmployeeService;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/employee")
@@ -18,12 +20,46 @@ import java.util.Collections;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    @PostMapping
+    public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest request) {
+        Employee savedEmployee = employeeService.registerEmployee(request);
+
+        CreateEmployeeResponse response = new CreateEmployeeResponse(
+                savedEmployee.getId(),
+                "Employee profile created"
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable String id, @RequestBody UpdateEmployeeRequest request) {
         employeeService.updateEmployee(id,request);
         return ResponseEntity.ok(Collections.singletonMap("message", "Employee profile updated"));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateEmployee(@PathVariable String id, @RequestBody UpdateEmployeeRequest request) {
+        employeeService.updateEmployee(id,request);
+        return ResponseEntity.ok(Collections.singletonMap("message", "Employee profile updated"));
+    }
+
+    @PostMapping("/{id}/documents")
+    public ResponseEntity<Map<String, String>> uploadDocument(
+            @PathVariable("id") String employeeId,
+            @RequestBody UploadDocumentRequest request) {
+        employeeService.uploadDocument(employeeId, request);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Document uploaded");
+        return ResponseEntity.status(201).body(response);
+    }
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<GetDocumentsResponse> getDocuments(@PathVariable("id") String employeeId) {
+        GetDocumentsResponse response = employeeService.getDocumentsByEmployeeId(employeeId);
+        return ResponseEntity.ok(response);
+    }
+
+
 
 }
 
