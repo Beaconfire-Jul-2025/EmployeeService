@@ -1,4 +1,4 @@
-package org.beaconfire.employee;
+package org.beaconfire;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
