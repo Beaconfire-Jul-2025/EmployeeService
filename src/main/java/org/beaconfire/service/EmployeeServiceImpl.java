@@ -7,11 +7,13 @@ import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
 import org.beaconfire.model.PersonalDocument;
+import org.beaconfire.model.VisaStatus;
 import org.beaconfire.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +22,67 @@ import java.util.Optional;
 
 public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
+    @Override
+    public String createEmployee(CreateEmployeeRequest request) {
+        if (employeeRepository.existsByEmail(request.getEmail())) {
+            throw new EmployeeAlreadyExistsException("Employee already exists with email: " + request.getEmail());
+        }
+
+        Employee employee = new Employee();
+
+        //basic info
+        employee.setUserId(request.getUserId());
+        employee.setFirstName(request.getFirstName());
+        employee.setLastName(request.getLastName());
+        employee.setMiddleName(request.getMiddleName());
+        employee.setPreferredName(request.getPreferredName());
+        employee.setEmail(request.getEmail());
+        employee.setAvatarPath(request.getAvatarPath());
+        employee.setCellPhone(request.getCellPhone());
+        employee.setAlternatePhone(request.getWorkPhone()); // 映射 workPhone -> alternatePhone
+        employee.setGender(request.getGender());
+        employee.setSsn(request.getSsn());
+        employee.setDob(request.getDob());
+        employee.setStartDate(request.getStartDate());
+        employee.setHouseId(request.getHouseId());
+
+        // address
+        employee.setAddressList(request.getAddresses());
+
+        // Visa status
+        if (request.getWorkAuthorization() != null) {
+            VisaStatus visaStatus = new VisaStatus();
+            visaStatus.setVisaType(request.getWorkAuthorization().getType());
+            visaStatus.setStartDate(request.getWorkAuthorization().getStartDate());
+            visaStatus.setEndDate(request.getWorkAuthorization().getEndDate());
+
+            if (request.getWorkAuthorization().getLastModificationDate() != null) {
+                visaStatus.setLastModificationDate(request.getWorkAuthorization().getLastModificationDate().atStartOfDay());
+            }
+
+            employee.setWorkAuthType(request.getWorkAuthorization().getType());
+            employee.setWorkAuthStartDate(request.getWorkAuthorization().getStartDate());
+            employee.setWorkAuthEndDate(request.getWorkAuthorization().getEndDate());
+
+            employee.setVisaStatuses(Collections.singletonList(visaStatus));
+        }
+
+
+        // driver licence
+        if (request.getDriverLicense() != null) {
+            employee.setDriverLicense(request.getDriverLicense().getLicenseNumber());
+            employee.setDriverLicenseExpiration(request.getDriverLicense().getExpirationDate());
+        }
+
+        // contact
+        employee.setContacts(request.getEmergencyContacts());
+
+        // save
+        employeeRepository.save(employee);
+        return "Employee created successfully.";
+    }
+
+
     @Override
     public String validateEmployeeInfo(ValidateEmployeeInfoRequest request){
         if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
