@@ -5,6 +5,7 @@ import org.beaconfire.model.Employee;
 
 
 public interface EmployeeService {
+    String createEmployee(CreateEmployeeRequest request);
     String validateEmployeeInfo(ValidateEmployeeInfoRequest request);
     Employee getEmployeeById(String id);
     Employee registerEmployee(CreateEmployeeRequest request);
