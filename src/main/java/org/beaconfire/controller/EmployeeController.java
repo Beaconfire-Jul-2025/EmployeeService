@@ -60,6 +60,14 @@ public class EmployeeController {
         GetDocumentsResponse response = employeeService.getDocumentsByEmployeeId(employeeId);
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/{id}/documents")
+    public ResponseEntity<Map<String, String>> updateDocument(
+            @PathVariable("id") String employeeId,
+            @RequestBody UpdateDocumentRequest request) {
+
+        employeeService.updateDocument(employeeId, request);
+        return ResponseEntity.ok(Collections.singletonMap("message", "Document updated successfully"));
+    }
 
 
 

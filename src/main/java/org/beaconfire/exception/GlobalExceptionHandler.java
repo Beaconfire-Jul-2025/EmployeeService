@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Collections;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -23,6 +24,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EmployeeAlreadyExistsException.class)
     public ResponseEntity<?> handleEmployeeAlreadyExists(EmployeeAlreadyExistsException ex) {
         return new ResponseEntity<>(Collections.singletonMap("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(DocumentNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleDocumentNotFoundException(DocumentNotFoundException ex) {
+        return ResponseEntity.status(404).body(Collections.singletonMap("message", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)

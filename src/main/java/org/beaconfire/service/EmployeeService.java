@@ -1,9 +1,6 @@
 package org.beaconfire.service;
 
-import org.beaconfire.dto.CreateEmployeeRequest;
-import org.beaconfire.dto.GetDocumentsResponse;
-import org.beaconfire.dto.UpdateEmployeeRequest;
-import org.beaconfire.dto.UploadDocumentRequest;
+import org.beaconfire.dto.*;
 import org.beaconfire.model.Employee;
 
 
@@ -14,6 +11,8 @@ public interface EmployeeService {
     Employee updateEmployee(String id, UpdateEmployeeRequest request);
     void uploadDocument(String employeeId, UploadDocumentRequest request);
     GetDocumentsResponse getDocumentsByEmployeeId(String employeeId);
+    void updateDocument(String employeeId, UpdateDocumentRequest request);
+
 
 
 }
