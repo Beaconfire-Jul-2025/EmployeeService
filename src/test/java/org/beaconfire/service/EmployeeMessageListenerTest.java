@@ -28,20 +28,18 @@ class EmployeeMessageListenerTest {
 
     @Test
     void testReceiveEmployeeMessage_Success() throws Exception {
-        // 准备假数据
         String message = "{\"firstName\":\"John\",\"lastName\":\"Doe\",\"email\":\"john.doe@example.com\"}";
         CreateEmployeeRequest mockRequest = new CreateEmployeeRequest();
         mockRequest.setFirstName("John");
         mockRequest.setLastName("Doe");
         mockRequest.setEmail("john.doe@example.com");
 
-        // mock ObjectMapper
+
         when(objectMapper.readValue(message, CreateEmployeeRequest.class)).thenReturn(mockRequest);
 
-        // 执行方法
+
         employeeMessageListener.receiveEmployeeMessage(message);
 
-        // 验证 service 是否被调用
         verify(employeeService, times(1)).createEmployee(mockRequest);
     }
 
@@ -49,13 +47,13 @@ class EmployeeMessageListenerTest {
     void testReceiveEmployeeMessage_Exception() throws Exception {
         String message = "{\"firstName\":\"John\"}";
 
-        // mock 抛出异常
+
         when(objectMapper.readValue(message, CreateEmployeeRequest.class)).thenThrow(new RuntimeException("Parsing error"));
 
-        // 执行
+
         employeeMessageListener.receiveEmployeeMessage(message);
 
-        // 验证 service 不被调用
+
         verify(employeeService, never()).createEmployee(any());
     }
 
