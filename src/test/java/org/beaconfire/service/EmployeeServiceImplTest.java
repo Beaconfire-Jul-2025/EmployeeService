@@ -2,7 +2,9 @@ package org.beaconfire.service;
 
 import org.beaconfire.dto.CreateEmployeeRequest;
 import org.beaconfire.dto.GetDocumentsResponse;
+import org.beaconfire.dto.UpdateDocumentRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
+import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
@@ -211,6 +213,81 @@ class EmployeeServiceImplTest {
         assertThrows(EmployeeNotFoundException.class, () -> employeeService.getDocumentsByEmployeeId(employeeId));
 
         verify(employeeRepository, times(1)).findById(employeeId);
+    }
+    @Test
+    void updateDocument_Success() {
+        String employeeId = "EMP123";
+
+        PersonalDocument doc = new PersonalDocument();
+        doc.setTitle("Old Title");
+        doc.setPath("s3-url");
+        doc.setComment("Old comment");
+
+        List<PersonalDocument> documents = new ArrayList<>();
+        documents.add(doc);
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(documents);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setTitle("New Title");
+        request.setPath("s3-url");
+        request.setComment("Updated comment");
+
+        employeeService.updateDocument(employeeId, request);
+
+        // 验证修改是否正确
+        assertEquals("New Title", doc.getTitle());
+        assertEquals("Updated comment", doc.getComment());
+        assertEquals("s3-url", doc.getPath());
+
+        verify(employeeRepository, times(1)).save(employee);
+    }
+
+    // 测试：员工不存在
+    @Test
+    void updateDocument_EmployeeNotFound() {
+        String employeeId = "EMP404";
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setPath("s3-url");
+        request.setTitle("New Title");
+        request.setComment("New comment");
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> employeeService.updateDocument(employeeId, request));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, never()).save(any(Employee.class));
+    }
+
+    // 测试：文档不存在
+    @Test
+    void updateDocument_DocumentNotFound() {
+        String employeeId = "EMP123";
+
+        List<PersonalDocument> documents = new ArrayList<>();
+        // 注意：这里没有添加 path 为 "s3-url" 的文档
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(documents);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setPath("s3-url");
+        request.setTitle("New Title");
+        request.setComment("New comment");
+
+        assertThrows(DocumentNotFoundException.class, () -> employeeService.updateDocument(employeeId, request));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 
 }
