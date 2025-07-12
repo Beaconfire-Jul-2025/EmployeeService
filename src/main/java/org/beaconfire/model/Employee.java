@@ -3,6 +3,7 @@ package org.beaconfire.model;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,18 +20,18 @@ public class Employee {
     private String id;
 
     private String userId;
-
-    // Basic Info
     private String firstName;
     private String lastName;
     private String middleName;
     private String preferredName;
+    private String avatarPath;
     private String email;
     private String cellPhone;
     private String alternatePhone;
     private String gender;
     private String ssn;
     private LocalDate dob;
+
 
     // Employment Info
     private LocalDate startDate;
