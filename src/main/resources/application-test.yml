@@ -1,0 +1,21 @@
+server:
+  port: 8082
+
+spring:
+  cloud:
+    config:
+      discovery:
+        enabled: false
+  config:
+    import: optional:file:./config/,optional:classpath:/config/
+
+  application:
+    name: employee
+
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
+
+eureka:
+  client:
+    enabled: false
