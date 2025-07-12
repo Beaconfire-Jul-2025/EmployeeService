@@ -3,8 +3,10 @@ package org.beaconfire.service;
 import org.beaconfire.dto.CreateEmployeeRequest;
 import org.beaconfire.dto.GetDocumentsResponse;
 import org.beaconfire.dto.UploadDocumentRequest;
+import org.beaconfire.dto.ValidateEmployeeInfoRequest;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
+import org.beaconfire.model.Address;
 import org.beaconfire.model.Employee;
 import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
@@ -14,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,115 @@ class EmployeeServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+    }
+    @Test
+    void validateEmployeeInfo_success() {
+        // 准备请求
+        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
+                .firstName("Alice")
+                .lastName("Smith")
+                .email("alice7@example.com")
+                .ssn("123-45-6789")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .gender("Female")
+                .workAuthorizationType("H1-B")
+                .workAuthStartDate(LocalDate.of(2023, 1, 1))
+                .workAuthEndDate(LocalDate.of(2026, 1, 1))
+                .workAuthDocumentPath("https://some-s3-url/file.pdf")
+                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
+                .hasDriverLicense(true)
+                .driverLicenseNumber("D1234567")
+                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
+                .driverLicensePath("https://some-s3-url/file.pdf")
+                .refFirstName("Bob")
+                .refPhone("1112223333")
+                .refEmail("bob@example.com")
+                .refRelationship("Friend")
+                .emergencyFirstName("Charlie")
+                .emergencyPhone("9998887777")
+                .emergencyEmail("charlie@example.com")
+                .emergencyRelationship("Brother")
+                .build();
+
+        // 准备模拟的返回 Employee
+        Employee employee = new Employee();
+        employee.setId("687133dbdb9b7c0d9128c378");
+
+        when(employeeRepository.findByEmail("alice7@example.com")).thenReturn(Optional.of(employee));
+
+        String resultId = employeeService.validateEmployeeInfo(request);
+
+        assertEquals("687133dbdb9b7c0d9128c378", resultId);
+    }
+
+    @Test
+    void validateEmployeeInfo_missingFirstName_shouldThrow() {
+        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
+                .firstName("")
+                .lastName("Smith")
+                .email("alice7@example.com")
+                .ssn("123-45-6789")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .gender("Female")
+                .workAuthorizationType("H1-B")
+                .workAuthStartDate(LocalDate.of(2023, 1, 1))
+                .workAuthEndDate(LocalDate.of(2026, 1, 1))
+                .workAuthDocumentPath("https://some-s3-url/file.pdf")
+                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
+                .hasDriverLicense(true)
+                .driverLicenseNumber("D1234567")
+                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
+                .driverLicensePath("https://some-s3-url/file.pdf")
+                .refFirstName("Bob")
+                .refPhone("1112223333")
+                .refEmail("bob@example.com")
+                .refRelationship("Friend")
+                .emergencyFirstName("Charlie")
+                .emergencyPhone("9998887777")
+                .emergencyEmail("charlie@example.com")
+                .emergencyRelationship("Brother")
+                .build();
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
+                () -> employeeService.validateEmployeeInfo(request));
+
+        assertEquals("First Name is required", thrown.getMessage());
+    }
+
+    @Test
+    void validateEmployeeInfo_employeeNotFound_shouldThrow() {
+        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
+                .firstName("Alice")
+                .lastName("Smith")
+                .email("notfound@example.com")
+                .ssn("123-45-6789")
+                .dateOfBirth(LocalDate.of(1990, 1, 1))
+                .gender("Female")
+                .workAuthorizationType("H1-B")
+                .workAuthStartDate(LocalDate.of(2023, 1, 1))
+                .workAuthEndDate(LocalDate.of(2026, 1, 1))
+                .workAuthDocumentPath("https://some-s3-url/file.pdf")
+                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
+                .hasDriverLicense(true)
+                .driverLicenseNumber("D1234567")
+                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
+                .driverLicensePath("https://some-s3-url/file.pdf")
+                .refFirstName("Bob")
+                .refPhone("1112223333")
+                .refEmail("bob@example.com")
+                .refRelationship("Friend")
+                .emergencyFirstName("Charlie")
+                .emergencyPhone("9998887777")
+                .emergencyEmail("charlie@example.com")
+                .emergencyRelationship("Brother")
+                .build();
+
+        when(employeeRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
+
+        EmployeeNotFoundException thrown = assertThrows(EmployeeNotFoundException.class,
+                () -> employeeService.validateEmployeeInfo(request));
+
+        assertTrue(thrown.getMessage().contains("notfound@example.com"));
     }
 
     @Test
