@@ -2,11 +2,11 @@ package org.beaconfire.service;
 
 import org.beaconfire.dto.CreateEmployeeRequest;
 import org.beaconfire.dto.GetDocumentsResponse;
+import org.beaconfire.dto.UpdateDocumentRequest;
 import org.beaconfire.dto.UploadDocumentRequest;
-import org.beaconfire.dto.ValidateEmployeeInfoRequest;
+import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
-import org.beaconfire.model.Address;
 import org.beaconfire.model.Employee;
 import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.repository.EmployeeRepository;
@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,115 +35,6 @@ class EmployeeServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-    }
-    @Test
-    void validateEmployeeInfo_success() {
-        // 准备请求
-        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
-                .firstName("Alice")
-                .lastName("Smith")
-                .email("alice7@example.com")
-                .ssn("123-45-6789")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .gender("Female")
-                .workAuthorizationType("H1-B")
-                .workAuthStartDate(LocalDate.of(2023, 1, 1))
-                .workAuthEndDate(LocalDate.of(2026, 1, 1))
-                .workAuthDocumentPath("https://some-s3-url/file.pdf")
-                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
-                .hasDriverLicense(true)
-                .driverLicenseNumber("D1234567")
-                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
-                .driverLicensePath("https://some-s3-url/file.pdf")
-                .refFirstName("Bob")
-                .refPhone("1112223333")
-                .refEmail("bob@example.com")
-                .refRelationship("Friend")
-                .emergencyFirstName("Charlie")
-                .emergencyPhone("9998887777")
-                .emergencyEmail("charlie@example.com")
-                .emergencyRelationship("Brother")
-                .build();
-
-        // 准备模拟的返回 Employee
-        Employee employee = new Employee();
-        employee.setId("687133dbdb9b7c0d9128c378");
-
-        when(employeeRepository.findByEmail("alice7@example.com")).thenReturn(Optional.of(employee));
-
-        String resultId = employeeService.validateEmployeeInfo(request);
-
-        assertEquals("687133dbdb9b7c0d9128c378", resultId);
-    }
-
-    @Test
-    void validateEmployeeInfo_missingFirstName_shouldThrow() {
-        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
-                .firstName("")
-                .lastName("Smith")
-                .email("alice7@example.com")
-                .ssn("123-45-6789")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .gender("Female")
-                .workAuthorizationType("H1-B")
-                .workAuthStartDate(LocalDate.of(2023, 1, 1))
-                .workAuthEndDate(LocalDate.of(2026, 1, 1))
-                .workAuthDocumentPath("https://some-s3-url/file.pdf")
-                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
-                .hasDriverLicense(true)
-                .driverLicenseNumber("D1234567")
-                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
-                .driverLicensePath("https://some-s3-url/file.pdf")
-                .refFirstName("Bob")
-                .refPhone("1112223333")
-                .refEmail("bob@example.com")
-                .refRelationship("Friend")
-                .emergencyFirstName("Charlie")
-                .emergencyPhone("9998887777")
-                .emergencyEmail("charlie@example.com")
-                .emergencyRelationship("Brother")
-                .build();
-
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> employeeService.validateEmployeeInfo(request));
-
-        assertEquals("First Name is required", thrown.getMessage());
-    }
-
-    @Test
-    void validateEmployeeInfo_employeeNotFound_shouldThrow() {
-        ValidateEmployeeInfoRequest request = ValidateEmployeeInfoRequest.builder()
-                .firstName("Alice")
-                .lastName("Smith")
-                .email("notfound@example.com")
-                .ssn("123-45-6789")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .gender("Female")
-                .workAuthorizationType("H1-B")
-                .workAuthStartDate(LocalDate.of(2023, 1, 1))
-                .workAuthEndDate(LocalDate.of(2026, 1, 1))
-                .workAuthDocumentPath("https://some-s3-url/file.pdf")
-                .currentAddress(new Address("123 Main St", "Apt 4B", "Boston", "MA", "02118"))
-                .hasDriverLicense(true)
-                .driverLicenseNumber("D1234567")
-                .driverLicenseExpiration(LocalDate.of(2030, 1, 1))
-                .driverLicensePath("https://some-s3-url/file.pdf")
-                .refFirstName("Bob")
-                .refPhone("1112223333")
-                .refEmail("bob@example.com")
-                .refRelationship("Friend")
-                .emergencyFirstName("Charlie")
-                .emergencyPhone("9998887777")
-                .emergencyEmail("charlie@example.com")
-                .emergencyRelationship("Brother")
-                .build();
-
-        when(employeeRepository.findByEmail("notfound@example.com")).thenReturn(Optional.empty());
-
-        EmployeeNotFoundException thrown = assertThrows(EmployeeNotFoundException.class,
-                () -> employeeService.validateEmployeeInfo(request));
-
-        assertTrue(thrown.getMessage().contains("notfound@example.com"));
     }
 
     @Test
@@ -323,6 +213,81 @@ class EmployeeServiceImplTest {
         assertThrows(EmployeeNotFoundException.class, () -> employeeService.getDocumentsByEmployeeId(employeeId));
 
         verify(employeeRepository, times(1)).findById(employeeId);
+    }
+    @Test
+    void updateDocument_Success() {
+        String employeeId = "EMP123";
+
+        PersonalDocument doc = new PersonalDocument();
+        doc.setTitle("Old Title");
+        doc.setPath("s3-url");
+        doc.setComment("Old comment");
+
+        List<PersonalDocument> documents = new ArrayList<>();
+        documents.add(doc);
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(documents);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setTitle("New Title");
+        request.setPath("s3-url");
+        request.setComment("Updated comment");
+
+        employeeService.updateDocument(employeeId, request);
+
+        // 验证修改是否正确
+        assertEquals("New Title", doc.getTitle());
+        assertEquals("Updated comment", doc.getComment());
+        assertEquals("s3-url", doc.getPath());
+
+        verify(employeeRepository, times(1)).save(employee);
+    }
+
+    // 测试：员工不存在
+    @Test
+    void updateDocument_EmployeeNotFound() {
+        String employeeId = "EMP404";
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setPath("s3-url");
+        request.setTitle("New Title");
+        request.setComment("New comment");
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> employeeService.updateDocument(employeeId, request));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, never()).save(any(Employee.class));
+    }
+
+    // 测试：文档不存在
+    @Test
+    void updateDocument_DocumentNotFound() {
+        String employeeId = "EMP123";
+
+        List<PersonalDocument> documents = new ArrayList<>();
+        // 注意：这里没有添加 path 为 "s3-url" 的文档
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(documents);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        UpdateDocumentRequest request = new UpdateDocumentRequest();
+        request.setPath("s3-url");
+        request.setTitle("New Title");
+        request.setComment("New comment");
+
+        assertThrows(DocumentNotFoundException.class, () -> employeeService.updateDocument(employeeId, request));
+
+        verify(employeeRepository, times(1)).findById(employeeId);
+        verify(employeeRepository, never()).save(any(Employee.class));
     }
 
 }

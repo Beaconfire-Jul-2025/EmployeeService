@@ -2,6 +2,7 @@ package org.beaconfire.service;
 
 import lombok.RequiredArgsConstructor;
 import org.beaconfire.dto.*;
+import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
 import org.beaconfire.model.Employee;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -175,6 +177,27 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return response;
     }
+    @Override
+    public void updateDocument(String employeeId, UpdateDocumentRequest request) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
+
+        Optional<PersonalDocument> optionalDoc = employee.getPersonalDocuments().stream()
+                .filter(doc -> doc.getPath().equals(request.getPath()))
+                .findFirst();
+
+        if (!optionalDoc.isPresent()) {
+            throw new DocumentNotFoundException("Document not found for the given path");
+        }
+
+        PersonalDocument doc = optionalDoc.get();
+        doc.setTitle(request.getTitle());
+        doc.setComment(request.getComment());
+        doc.setPath(request.getPath());
+
+        employeeRepository.save(employee);
+    }
+
 
 
 }
