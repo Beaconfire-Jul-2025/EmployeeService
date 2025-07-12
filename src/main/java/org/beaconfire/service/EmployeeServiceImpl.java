@@ -20,6 +20,86 @@ import java.util.Optional;
 
 public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
+    @Override
+    public String validateEmployeeInfo(ValidateEmployeeInfoRequest request){
+        if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("First Name is required");
+        }
+        if (request.getLastName() == null || request.getLastName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Last Name is required");
+        }
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (request.getSsn() == null || request.getSsn().trim().isEmpty()) {
+            throw new IllegalArgumentException("SSN is required");
+        }
+        if (request.getDateOfBirth() == null) {
+            throw new IllegalArgumentException("Date of Birth is required");
+        }
+        if (request.getGender() == null || request.getGender().trim().isEmpty()) {
+            throw new IllegalArgumentException("Gender is required");
+        }
+        //If not a citizen or green card, check for work authorization
+        if (!"Citizen".equalsIgnoreCase(request.getWorkAuthorizationType())
+                && !"Green Card".equalsIgnoreCase(request.getWorkAuthorizationType())) {
+            if (request.getWorkAuthStartDate() == null || request.getWorkAuthEndDate() == null) {
+                throw new IllegalArgumentException("Work authorization dates are required");
+            }
+            if (request.getWorkAuthDocumentPath() == null || request.getWorkAuthDocumentPath().trim().isEmpty()) {
+                throw new IllegalArgumentException("Work authorization document is required");
+            }
+        }
+        //valid address info
+        if (request.getCurrentAddress() == null
+                || request.getCurrentAddress().getAddressLine1() == null || request.getCurrentAddress().getAddressLine1().trim().isEmpty()
+                || request.getCurrentAddress().getCity() == null || request.getCurrentAddress().getCity().trim().isEmpty()
+                || request.getCurrentAddress().getState() == null || request.getCurrentAddress().getState().trim().isEmpty()
+                || request.getCurrentAddress().getZipCode() == null || request.getCurrentAddress().getZipCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("Current Address with all required fields is required");
+        }
+
+        // If employee have a driver's license, check the license information
+        if (Boolean.TRUE.equals(request.getHasDriverLicense())) {
+            if (request.getDriverLicenseNumber() == null || request.getDriverLicenseNumber().trim().isEmpty()) {
+                throw new IllegalArgumentException("Driver license number is required");
+            }
+            if (request.getDriverLicenseExpiration() == null) {
+                throw new IllegalArgumentException("Driver license expiration date is required");
+            }
+            if (request.getDriverLicensePath() == null || request.getDriverLicensePath().trim().isEmpty()) {
+                throw new IllegalArgumentException("Driver license document is required");
+            }
+        }
+        //valid reference info
+        if (request.getRefFirstName() == null || request.getRefFirstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reference First Name is required");
+        }
+        if (request.getRefPhone() == null || request.getRefPhone().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reference Phone is required");
+        }
+        if (request.getRefEmail() == null || request.getRefEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reference Email is required");
+        }
+        if (request.getRefRelationship() == null || request.getRefRelationship().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reference Relationship is required");
+        }
+        // Must have an emergency contact
+        if (request.getEmergencyFirstName() == null || request.getEmergencyPhone() == null) {
+            throw new IllegalArgumentException("Emergency contact is required");
+        }
+        if (request.getEmergencyEmail() == null || request.getEmergencyEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Emergency contact email is required");
+        }
+        if (request.getEmergencyRelationship() == null || request.getEmergencyRelationship().trim().isEmpty()) {
+            throw new IllegalArgumentException("Emergency contact relationship is required");
+        }
+        Employee employee = employeeRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with email: " + request.getEmail()));
+
+        return employee.getId();
+    }
+
 
     @Override
     public Employee getEmployeeById(String id) {

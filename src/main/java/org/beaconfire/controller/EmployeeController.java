@@ -8,10 +8,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 
 @RestController
 @RequestMapping("/employee")
@@ -19,6 +19,17 @@ import java.util.Map;
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+    @PostMapping("/validate-info")
+    public ResponseEntity<ValidateEmployeeInfoResponse>  validateEmployeeInfo(@RequestBody @Valid ValidateEmployeeInfoRequest request) {
+        String employeeId = employeeService.validateEmployeeInfo(request);
+
+        ValidateEmployeeInfoResponse response = new ValidateEmployeeInfoResponse(
+                employeeId,
+                "Onboarding application submitted successfully. Please wait for HR review."
+        );
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest request) {
         Employee savedEmployee = employeeService.registerEmployee(request);

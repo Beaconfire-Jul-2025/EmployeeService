@@ -13,6 +13,10 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return new ResponseEntity<>(Collections.singletonMap("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(EmployeeNotFoundException.class)
     public ResponseEntity<?> handleEmployeeNotFound(EmployeeNotFoundException ex) {
