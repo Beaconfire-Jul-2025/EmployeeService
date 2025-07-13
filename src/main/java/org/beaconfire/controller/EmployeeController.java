@@ -57,17 +57,14 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getEmployee(@PathVariable String id) {
+    public ResponseEntity<GetEmployeeResponse> getEmployee(@PathVariable String id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) authentication.getPrincipal();
         String username = (String) authentication.getDetails();
 
         System.out.println("getEmployee - userId: " + userId + ", username: " + username);
 
-        Employee employee = employeeService.getEmployeeById(id);
-
-        GetEmployeeResponse response = new GetEmployeeResponse(employee, "Employee profile retrieved");
-
+        GetEmployeeResponse response = employeeService.getEmployeeProfileById(id);
         return ResponseEntity.ok(response);
     }
 
@@ -134,6 +131,11 @@ public class EmployeeController {
         System.out.println("getEmployeesByHouse - userId: " + userId + ", username: " + username + ", houseId: " + houseId);
         List<GetEmployeeByHouseResponse> employees = employeeService.getEmployeesByHouseId(houseId);
         return ResponseEntity.ok(employees);
+    }
+
+    @GetMapping("/search")
+    public List<GetEmployeeResponse> searchEmployees(@RequestParam("name") String name) {
+        return employeeService.searchEmployeesByName(name);
     }
 
 }

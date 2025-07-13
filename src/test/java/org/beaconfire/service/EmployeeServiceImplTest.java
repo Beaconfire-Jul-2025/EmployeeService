@@ -328,5 +328,38 @@ class EmployeeServiceImplTest {
         assertEquals("Bob", responses.get(2).getName());
         assertEquals("333-333-3333", responses.get(2).getPhone());
     }
+    @Test
+    void testSearchEmployeesByName() {
+        Employee emp = new Employee();
+        emp.setId("123");
+        emp.setFirstName("Alice");
+        emp.setLastName("Smith");
+        emp.setPreferredName("Ali");
+        emp.setEmail("alice@example.com");
+        emp.setCellPhone("123-456-7890");
+
+        // 设置 repository mock 返回值
+        when(employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
+                anyString(), anyString(), anyString())).thenReturn(Arrays.asList(emp));
+
+
+        // 调用方法
+        List<GetEmployeeResponse> result = employeeService.searchEmployeesByName("Alice");
+
+        // 验证结果
+        assertEquals(1, result.size());
+        GetEmployeeResponse response = result.get(0);
+        assertEquals("123", response.getId());
+        assertEquals("Alice", response.getFirstName());
+        assertEquals("Smith", response.getLastName());
+        assertEquals("Ali", response.getPreferredName());
+        assertEquals("alice@example.com", response.getEmail());
+        assertEquals("123-456-7890", response.getCellPhone());
+
+        // 验证 repository 方法是否被调用
+        verify(employeeRepository, times(1))
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
+                        anyString(), anyString(), anyString());
+    }
 
 }
