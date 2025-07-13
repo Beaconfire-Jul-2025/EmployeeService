@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -124,9 +125,16 @@ public class EmployeeController {
         employeeService.updateDocument(employeeId, request);
         return ResponseEntity.ok(Collections.singletonMap("message", "Document updated successfully"));
     }
+    @GetMapping("/house/{houseId}")
+    public ResponseEntity<List<GetEmployeeByHouseResponse>> getEmployeesByHouse(@PathVariable String houseId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) authentication.getPrincipal();
+        String username = (String) authentication.getDetails();
 
-
-
+        System.out.println("getEmployeesByHouse - userId: " + userId + ", username: " + username + ", houseId: " + houseId);
+        List<GetEmployeeByHouseResponse> employees = employeeService.getEmployeesByHouseId(houseId);
+        return ResponseEntity.ok(employees);
+    }
 
 }
 

@@ -3,6 +3,8 @@ package org.beaconfire.service;
 import org.beaconfire.dto.*;
 import org.beaconfire.model.Employee;
 
+import java.util.List;
+
 
 public interface EmployeeService {
     String createEmployee(CreateEmployeeRequest request);
@@ -13,6 +15,8 @@ public interface EmployeeService {
     void uploadDocument(String employeeId, UploadDocumentRequest request);
     GetDocumentsResponse getDocumentsByEmployeeId(String employeeId);
     void updateDocument(String employeeId, UpdateDocumentRequest request);
+
+    List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId);
 
 
 

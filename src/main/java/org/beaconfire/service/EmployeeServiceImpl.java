@@ -260,6 +260,21 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeeRepository.save(employee);
     }
+    @Override
+    public List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId) {
+        List<Employee> employees = employeeRepository.findByHouseId(houseId);
+        List<GetEmployeeByHouseResponse> responses = new ArrayList<>();
+
+        for (Employee e : employees) {
+            String name = (e.getPreferredName()!= null && !e.getPreferredName().isEmpty())
+                    ? e.getPreferredName()
+                    : e.getFirstName();
+            String phone = e.getCellPhone();
+            responses.add(new GetEmployeeByHouseResponse(name, phone));
+        }
+        return responses;
+    }
+
 
 
 

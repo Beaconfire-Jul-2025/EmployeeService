@@ -1,9 +1,6 @@
 package org.beaconfire.service;
 
-import org.beaconfire.dto.CreateEmployeeRequest;
-import org.beaconfire.dto.GetDocumentsResponse;
-import org.beaconfire.dto.UpdateDocumentRequest;
-import org.beaconfire.dto.UploadDocumentRequest;
+import org.beaconfire.dto.*;
 import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
@@ -18,6 +15,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -288,6 +286,47 @@ class EmployeeServiceImplTest {
 
         verify(employeeRepository, times(1)).findById(employeeId);
         verify(employeeRepository, never()).save(any(Employee.class));
+    }
+    @Test
+    public void testGetEmployeesByHouseId() {
+        // 准备测试数据
+        Employee emp1 = Employee.builder()
+                .firstName("John")
+                .preferredName("Johnny")
+                .cellPhone("111-111-1111")
+                .build();
+
+        Employee emp2 = Employee.builder()
+                .firstName("Alice")
+                .preferredName("")
+                .cellPhone("222-222-2222")
+                .build();
+
+        Employee emp3 = Employee.builder()
+                .firstName("Bob")
+                .preferredName(null)
+                .cellPhone("333-333-3333")
+                .build();
+
+        List<Employee> mockEmployees = Arrays.asList(emp1, emp2, emp3);
+
+        // Mock repository 返回数据
+        when(employeeRepository.findByHouseId("house123")).thenReturn(mockEmployees);
+
+        // 调用方法
+        List<GetEmployeeByHouseResponse> responses = employeeService.getEmployeesByHouseId("house123");
+
+        // 断言
+        assertEquals(3, responses.size());
+
+        assertEquals("Johnny", responses.get(0).getName());
+        assertEquals("111-111-1111", responses.get(0).getPhone());
+
+        assertEquals("Alice", responses.get(1).getName());
+        assertEquals("222-222-2222", responses.get(1).getPhone());
+
+        assertEquals("Bob", responses.get(2).getName());
+        assertEquals("333-333-3333", responses.get(2).getPhone());
     }
 
 }
