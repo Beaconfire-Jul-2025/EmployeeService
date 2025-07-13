@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 @Data
 public class UpdateEmployeeRequest {
+    private String id;
+
     private String firstName;
     private String lastName;
     private String middleName;
