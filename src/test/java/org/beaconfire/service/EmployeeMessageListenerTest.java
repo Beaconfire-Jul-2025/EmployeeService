@@ -2,6 +2,7 @@ package org.beaconfire.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -57,4 +58,27 @@ class EmployeeMessageListenerTest {
         verify(employeeService, never()).createEmployee(any());
     }
 
+    @Test
+    void testReceiveUpdateEmployeeMessage_Success() throws Exception {
+        String message = "{\"id\":\"123\",\"firstName\":\"UpdatedName\"}";
+        UpdateEmployeeRequest mockRequest = new UpdateEmployeeRequest();
+        mockRequest.setId("123");
+        mockRequest.setFirstName("UpdatedName");
+
+        when(objectMapper.readValue(message, UpdateEmployeeRequest.class)).thenReturn(mockRequest);
+
+        employeeMessageListener.receiveUpdateEmployeeMessage(message);
+
+        verify(employeeService, times(1)).updateEmployee("123", mockRequest);
+    }
+    @Test
+    void testReceiveUpdateEmployeeMessage_Exception() throws Exception {
+        String message = "{\"id\":\"123\"}";
+
+        when(objectMapper.readValue(message, UpdateEmployeeRequest.class)).thenThrow(new RuntimeException("Parse error"));
+
+        employeeMessageListener.receiveUpdateEmployeeMessage(message);
+
+        verify(employeeService, never()).updateEmployee(any(), any());
+    }
 }

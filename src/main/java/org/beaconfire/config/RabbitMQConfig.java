@@ -29,5 +29,9 @@ public class RabbitMQConfig {
     public Binding binding(Queue employeeQueue, DirectExchange employeeExchange) {
         return BindingBuilder.bind(employeeQueue).to(employeeExchange).with(EMPLOYEE_ROUTING_KEY);
     }
+    @Bean
+    public Queue updateEmployeeQueue() {
+        return new Queue("employee.update.queue", true);
+    }
 }
 

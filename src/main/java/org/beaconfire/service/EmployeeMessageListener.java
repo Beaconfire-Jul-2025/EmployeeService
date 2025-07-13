@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.beaconfire.dto.CreateEmployeeRequest;
+import org.beaconfire.dto.UpdateEmployeeRequest;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,22 @@ public class EmployeeMessageListener {
             log.info("Employee created successfully!");
         } catch (Exception e) {
             log.error("Error processing employee creation message", e);
+        }
+    }
+    @RabbitListener(queues = "employee.update.queue")
+    public void receiveUpdateEmployeeMessage(String message) {
+        try {
+            log.info("Received update message from queue: {}", message);
+
+            // JSON → UpdateEmployeeRequest
+            UpdateEmployeeRequest request = objectMapper.readValue(message, UpdateEmployeeRequest.class);
+
+            String id = request.getId(); 
+
+            employeeService.updateEmployee(id, request);
+            log.info("Employee updated successfully!");
+        } catch (Exception e) {
+            log.error("Error processing employee update message", e);
         }
     }
 }
