@@ -1,6 +1,7 @@
 package org.beaconfire.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.var;
 import org.beaconfire.dto.*;
 import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -162,6 +164,91 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return employee.getId();
     }
+    @Override
+    public GetEmployeeResponse getEmployeeProfileById(String id) {
+        Employee employee = getEmployeeById(id);
+        if (employee == null) {
+            throw new EmployeeNotFoundException("Employee not found with id: " + id);
+        }
+
+        GetEmployeeResponse response = new GetEmployeeResponse();
+        response.setId(employee.getId());
+        response.setUserId(employee.getUserId());
+        response.setFirstName(employee.getFirstName());
+        response.setLastName(employee.getLastName());
+        response.setMiddleName(employee.getMiddleName());
+        response.setPreferredName(employee.getPreferredName());
+        response.setEmail(employee.getEmail());
+        response.setAvatarPath(employee.getAvatarPath());
+        response.setCellPhone(employee.getCellPhone());
+        response.setWorkPhone(employee.getAlternatePhone());
+        response.setGender(employee.getGender());
+        response.setSsn(employee.getSsn());
+        response.setDob(employee.getDob());
+        response.setStartDate(employee.getStartDate());
+        response.setHouseId(employee.getHouseId());
+
+        // addresses
+        if (employee.getAddressList() != null) {
+            List<AddressDTO> addressDTOs = employee.getAddressList().stream().map(addr -> {
+                AddressDTO dto = new AddressDTO();
+                dto.setAddressLine1(addr.getAddressLine1());
+                dto.setAddressLine2(addr.getAddressLine2());
+                dto.setCity(addr.getCity());
+                dto.setState(addr.getState());
+                dto.setZipCode(addr.getZipCode());
+                return dto;
+            }).collect(Collectors.toList());
+            response.setAddresses(addressDTOs);
+        } else {
+            response.setAddresses(new ArrayList<>());
+        }
+
+        // work authorization
+        if (employee.getVisaStatuses() != null && !employee.getVisaStatuses().isEmpty()) {
+            VisaStatus visa = employee.getVisaStatuses().get(0);
+            WorkAuthorizationDTO waDTO = new WorkAuthorizationDTO();
+            waDTO.setType(visa.getVisaType());
+            waDTO.setStartDate(visa.getStartDate());
+            waDTO.setEndDate(visa.getEndDate());
+            waDTO.setLastModificationDate(
+                    visa.getLastModificationDate() != null ? visa.getLastModificationDate().toLocalDate() : null
+            );
+            waDTO.setIsUsCitizen(false);
+            waDTO.setGreenCardHolder(false);
+            response.setWorkAuthorization(waDTO);
+        }
+
+        // driver license
+        DriverLicenseDTO dlDTO = new DriverLicenseDTO();
+        if (employee.getDriverLicense() != null && !employee.getDriverLicense().isEmpty()) {
+            dlDTO.setHasLicense(true);
+            dlDTO.setLicenseNumber(employee.getDriverLicense());
+            dlDTO.setExpirationDate(employee.getDriverLicenseExpiration());
+        } else {
+            dlDTO.setHasLicense(false);
+        }
+        response.setDriverLicense(dlDTO);
+
+        // emergency contacts
+        if (employee.getContacts() != null) {
+            List<EmergencyContactDTO> contactDTOs = employee.getContacts().stream().map(c -> {
+                EmergencyContactDTO dto = new EmergencyContactDTO();
+                dto.setFirstName(c.getFirstName());
+                dto.setLastName(c.getLastName());
+                dto.setCellPhone(c.getCellPhone());
+                dto.setEmail(c.getEmail());
+                dto.setRelationship(c.getRelationship());
+                dto.setType(c.getType());
+                return dto;
+            }).collect(Collectors.toList());
+            response.setEmergencyContacts(contactDTOs);
+        } else {
+            response.setEmergencyContacts(new ArrayList<>());
+        }
+
+        return response;
+    }
 
 
     @Override
@@ -271,6 +358,26 @@ public class EmployeeServiceImpl implements EmployeeService {
                     : e.getFirstName();
             String phone = e.getCellPhone();
             responses.add(new GetEmployeeByHouseResponse(name, phone));
+        }
+        return responses;
+    }
+
+    @Override
+    public List<GetEmployeeResponse> searchEmployeesByName(String name) {
+        List<Employee> employees = employeeRepository
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
+                        name, name, name);
+
+        List<GetEmployeeResponse> responses = new ArrayList<>();
+        for (Employee e : employees) {
+            GetEmployeeResponse response = new GetEmployeeResponse();
+            response.setId(e.getId());
+            response.setFirstName(e.getFirstName());
+            response.setLastName(e.getLastName());
+            response.setPreferredName(e.getPreferredName());
+            response.setEmail(e.getEmail());
+            response.setCellPhone(e.getCellPhone());
+            responses.add(response);
         }
         return responses;
     }

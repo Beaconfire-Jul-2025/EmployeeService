@@ -13,5 +13,6 @@ public interface EmployeeRepository extends MongoRepository<Employee, String> {
     Optional<Employee> findByEmail(String email);
     boolean existsByEmail(String email);
     List<Employee> findByHouseId(String houseId);
-
+    List<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
+            String firstName, String lastName, String preferredName);
 }

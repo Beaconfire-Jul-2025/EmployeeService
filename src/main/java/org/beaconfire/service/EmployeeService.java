@@ -15,8 +15,11 @@ public interface EmployeeService {
     void uploadDocument(String employeeId, UploadDocumentRequest request);
     GetDocumentsResponse getDocumentsByEmployeeId(String employeeId);
     void updateDocument(String employeeId, UpdateDocumentRequest request);
+    GetEmployeeResponse getEmployeeProfileById(String id);
 
     List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId);
+
+    List<GetEmployeeResponse> searchEmployeesByName(String name);
 
 
 
