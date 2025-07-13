@@ -1,7 +1,6 @@
 package org.beaconfire.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.var;
 import org.beaconfire.dto.*;
 import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
