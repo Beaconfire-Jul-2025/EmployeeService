@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/employee")
 @RequiredArgsConstructor
 public class EmployeeController {
 
