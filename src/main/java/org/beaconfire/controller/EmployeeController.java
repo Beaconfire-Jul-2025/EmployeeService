@@ -68,7 +68,7 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
     @GetMapping
-    public ResponseEntity<List<GetEmployeeResponse>> getEmployees(@RequestParam(value = "fullName", required = false) String fullName) {
+    public ResponseEntity<List<GetEmployeeResponse>> getEmployees(@RequestParam(value = "name", required = false) String fullName) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) authentication.getPrincipal();
         String username = (String) authentication.getDetails();
