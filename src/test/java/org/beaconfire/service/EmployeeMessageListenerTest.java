@@ -2,10 +2,7 @@ package org.beaconfire.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.beaconfire.dto.CreateEmployeeRequest;
-import org.beaconfire.dto.GetEmployeeResponse;
 import org.beaconfire.dto.UpdateEmployeeRequest;
-import org.beaconfire.model.Employee;
-import org.beaconfire.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -13,10 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class EmployeeMessageListenerTest {
