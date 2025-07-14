@@ -150,5 +150,10 @@ public class EmployeeController {
         return ResponseEntity.ok(employees);
     }
 
+    @GetMapping("/search")
+    public List<GetEmployeeResponse> searchEmployees(@RequestParam("name") String name) {
+        return employeeService.searchEmployeesByName(name);
+    }
+
 }
 

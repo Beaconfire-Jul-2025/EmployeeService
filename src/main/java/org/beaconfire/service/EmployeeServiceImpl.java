@@ -250,7 +250,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
-
     @Override
     public Employee getEmployeeById(String id) {
         return employeeRepository.findById(id)
@@ -381,6 +380,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return responses;
     }
+
     @Override
     public List<GetEmployeeResponse> getAllEmployees() {
         List<Employee> employees = employeeRepository.findAll();
@@ -398,7 +398,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         return responses;
     }
-
 
 
 
