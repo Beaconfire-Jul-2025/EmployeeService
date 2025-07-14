@@ -21,7 +21,5 @@ public interface EmployeeService {
 
     List<GetEmployeeResponse> searchEmployeesByName(String name);
 
-
-
-
+    List<GetEmployeeResponse> getAllEmployees();
 }

@@ -250,6 +250,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
+
     @Override
     public Employee getEmployeeById(String id) {
         return employeeRepository.findById(id)
@@ -366,6 +367,23 @@ public class EmployeeServiceImpl implements EmployeeService {
         List<Employee> employees = employeeRepository
                 .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
                         name, name, name);
+
+        List<GetEmployeeResponse> responses = new ArrayList<>();
+        for (Employee e : employees) {
+            GetEmployeeResponse response = new GetEmployeeResponse();
+            response.setId(e.getId());
+            response.setFirstName(e.getFirstName());
+            response.setLastName(e.getLastName());
+            response.setPreferredName(e.getPreferredName());
+            response.setEmail(e.getEmail());
+            response.setCellPhone(e.getCellPhone());
+            responses.add(response);
+        }
+        return responses;
+    }
+    @Override
+    public List<GetEmployeeResponse> getAllEmployees() {
+        List<Employee> employees = employeeRepository.findAll();
 
         List<GetEmployeeResponse> responses = new ArrayList<>();
         for (Employee e : employees) {

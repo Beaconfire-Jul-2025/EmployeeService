@@ -67,6 +67,23 @@ public class EmployeeController {
         GetEmployeeResponse response = employeeService.getEmployeeProfileById(id);
         return ResponseEntity.ok(response);
     }
+    @GetMapping
+    public ResponseEntity<List<GetEmployeeResponse>> getEmployees(@RequestParam(value = "fullName", required = false) String fullName) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) authentication.getPrincipal();
+        String username = (String) authentication.getDetails();
+
+        System.out.println("getEmployees - userId: " + userId + ", username: " + username + ", fullName: " + fullName);
+
+        List<GetEmployeeResponse> responses;
+        if (fullName != null && !fullName.isEmpty()) {
+            responses = employeeService.searchEmployeesByName(fullName);
+        } else {
+            responses = employeeService.getAllEmployees();
+        }
+        return ResponseEntity.ok(responses);
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable String id, @RequestBody UpdateEmployeeRequest request) {
@@ -131,11 +148,6 @@ public class EmployeeController {
         System.out.println("getEmployeesByHouse - userId: " + userId + ", username: " + username + ", houseId: " + houseId);
         List<GetEmployeeByHouseResponse> employees = employeeService.getEmployeesByHouseId(houseId);
         return ResponseEntity.ok(employees);
-    }
-
-    @GetMapping("/search")
-    public List<GetEmployeeResponse> searchEmployees(@RequestParam("name") String name) {
-        return employeeService.searchEmployeesByName(name);
     }
 
 }

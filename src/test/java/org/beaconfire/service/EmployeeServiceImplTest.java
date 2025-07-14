@@ -330,36 +330,35 @@ class EmployeeServiceImplTest {
     }
     @Test
     void testSearchEmployeesByName() {
+        // 准备测试数据
         Employee emp = new Employee();
-        emp.setId("123");
+        emp.setId("1");
         emp.setFirstName("Alice");
         emp.setLastName("Smith");
         emp.setPreferredName("Ali");
         emp.setEmail("alice@example.com");
-        emp.setCellPhone("123-456-7890");
+        emp.setCellPhone("123-456");
 
-        // 设置 repository mock 返回值
         when(employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                anyString(), anyString(), anyString())).thenReturn(Arrays.asList(emp));
-
+                "Ali", "Ali", "Ali"
+        )).thenReturn(Arrays.asList(emp));
 
         // 调用方法
-        List<GetEmployeeResponse> result = employeeService.searchEmployeesByName("Alice");
+        List<GetEmployeeResponse> results = employeeService.searchEmployeesByName("Ali");
 
-        // 验证结果
-        assertEquals(1, result.size());
-        GetEmployeeResponse response = result.get(0);
-        assertEquals("123", response.getId());
-        assertEquals("Alice", response.getFirstName());
-        assertEquals("Smith", response.getLastName());
-        assertEquals("Ali", response.getPreferredName());
-        assertEquals("alice@example.com", response.getEmail());
-        assertEquals("123-456-7890", response.getCellPhone());
+        // 断言
+        assertEquals(1, results.size());
+        GetEmployeeResponse res = results.get(0);
+        assertEquals("1", res.getId());
+        assertEquals("Alice", res.getFirstName());
+        assertEquals("Smith", res.getLastName());
+        assertEquals("Ali", res.getPreferredName());
+        assertEquals("alice@example.com", res.getEmail());
+        assertEquals("123-456", res.getCellPhone());
 
-        // 验证 repository 方法是否被调用
+        // 验证调用次数
         verify(employeeRepository, times(1))
-                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                        anyString(), anyString(), anyString());
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase("Ali", "Ali", "Ali");
     }
 
 }
