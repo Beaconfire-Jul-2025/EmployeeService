@@ -22,31 +22,36 @@ import javax.servlet.http.HttpServletResponse;
 @Component
 @Slf4j
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
+    @Override
+    protected boolean shouldNotFilter(javax.servlet.http.HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/actuator/");
+    }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-
+    protected void doFilterInternal(
+            javax.servlet.http.HttpServletRequest request,
+            javax.servlet.http.HttpServletResponse response,
+            javax.servlet.FilterChain filterChain)
+            throws javax.servlet.ServletException, java.io.IOException {
         String userId = request.getHeader("x-User-Id");
         String username = request.getHeader("x-Username");
         String rolesHeader = request.getHeader("x-Roles");
 
-        log.info("Received headers => userId: {}, username: {}, roles: {}", userId, username, rolesHeader);
+        log.info("userId = {}, username = {}, roles = {}", userId, username, rolesHeader);
 
         if (userId != null && username != null && rolesHeader != null) {
-            List<GrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
-
+            List<GrantedAuthority> authorities =
+                    Arrays.stream(rolesHeader.split(","))
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList());
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(userId, null, authorities);
             auth.setDetails(username);
             SecurityContextHolder.getContext().setAuthentication(auth);
-
             filterChain.doFilter(request, response);
         } else {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            response.sendError(javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
         }
     }
 }
