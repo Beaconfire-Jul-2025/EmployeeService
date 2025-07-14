@@ -329,68 +329,54 @@ class EmployeeServiceImplTest {
         assertEquals("333-333-3333", responses.get(2).getPhone());
     }
     @Test
-    void testSearchEmployeesByName() {
+    void testGetAllEmployees() {
+        // 准备 mock 数据
+        Employee emp1 = new Employee();
+        emp1.setId("1");
+        emp1.setFirstName("Alice");
+        emp1.setLastName("Smith");
+        emp1.setPreferredName("Ali");
+        emp1.setEmail("alice@example.com");
+        emp1.setCellPhone("123-456-7890");
 
-        // 准备测试数据
-        Employee emp = new Employee();
-        emp.setId("1");
+        Employee emp2 = new Employee();
+        emp2.setId("2");
+        emp2.setFirstName("Bob");
+        emp2.setLastName("Johnson");
+        emp2.setPreferredName(null);
+        emp2.setEmail("bob@example.com");
+        emp2.setCellPhone("987-654-3210");
 
-        Employee emp = new Employee();
-        emp.setId("123");
+        List<Employee> mockEmployees = Arrays.asList(emp1, emp2);
 
-        emp.setFirstName("Alice");
-        emp.setLastName("Smith");
-        emp.setPreferredName("Ali");
-        emp.setEmail("alice@example.com");
+        // 设置 repository 返回值
+        when(employeeRepository.findAll()).thenReturn(mockEmployees);
 
-        emp.setCellPhone("123-456");
-
-        when(employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                "Ali", "Ali", "Ali"
-        )).thenReturn(Arrays.asList(emp));
-
-        // 调用方法
-        List<GetEmployeeResponse> results = employeeService.searchEmployeesByName("Ali");
+        // 调用被测方法
+        List<GetEmployeeResponse> results = employeeService.getAllEmployees();
 
         // 断言
-        assertEquals(1, results.size());
-        GetEmployeeResponse res = results.get(0);
-        assertEquals("1", res.getId());
-        assertEquals("Alice", res.getFirstName());
-        assertEquals("Smith", res.getLastName());
-        assertEquals("Ali", res.getPreferredName());
-        assertEquals("alice@example.com", res.getEmail());
-        assertEquals("123-456", res.getCellPhone());
+        assertEquals(2, results.size());
 
-        // 验证调用次数
-        verify(employeeRepository, times(1))
-                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase("Ali", "Ali", "Ali");
+        GetEmployeeResponse res1 = results.get(0);
+        assertEquals("1", res1.getId());
+        assertEquals("Alice", res1.getFirstName());
+        assertEquals("Smith", res1.getLastName());
+        assertEquals("Ali", res1.getPreferredName());
+        assertEquals("alice@example.com", res1.getEmail());
+        assertEquals("123-456-7890", res1.getCellPhone());
 
-        emp.setCellPhone("123-456-7890");
+        GetEmployeeResponse res2 = results.get(1);
+        assertEquals("2", res2.getId());
+        assertEquals("Bob", res2.getFirstName());
+        assertEquals("Johnson", res2.getLastName());
+        assertNull(res2.getPreferredName());
+        assertEquals("bob@example.com", res2.getEmail());
+        assertEquals("987-654-3210", res2.getCellPhone());
 
-        // 设置 repository mock 返回值
-        when(employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                anyString(), anyString(), anyString())).thenReturn(Arrays.asList(emp));
-
-
-        // 调用方法
-        List<GetEmployeeResponse> result = employeeService.searchEmployeesByName("Alice");
-
-        // 验证结果
-        assertEquals(1, result.size());
-        GetEmployeeResponse response = result.get(0);
-        assertEquals("123", response.getId());
-        assertEquals("Alice", response.getFirstName());
-        assertEquals("Smith", response.getLastName());
-        assertEquals("Ali", response.getPreferredName());
-        assertEquals("alice@example.com", response.getEmail());
-        assertEquals("123-456-7890", response.getCellPhone());
-
-        // 验证 repository 方法是否被调用
-        verify(employeeRepository, times(1))
-                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                        anyString(), anyString(), anyString());
-
+        // 验证 repository 是否被调用一次
+        verify(employeeRepository, times(1)).findAll();
     }
+
 
 }
