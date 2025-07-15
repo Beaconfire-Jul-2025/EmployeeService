@@ -12,7 +12,7 @@ public class UpdateEmployeeRequest {
     private String middleName;
     private String preferredName;
     private String cellPhone;
-    private String alternatePhone;
+    private String workPhone;
     private String gender;
     private String ssn;
     private LocalDate dob;
@@ -21,6 +21,5 @@ public class UpdateEmployeeRequest {
     private String workAuthType;
     private LocalDate workAuthStartDate;
     private LocalDate workAuthEndDate;
-    private String driverLicense;
-    private LocalDate driverLicenseExpiration;
+    private DriverLicenseDTO driverLicense;
 }

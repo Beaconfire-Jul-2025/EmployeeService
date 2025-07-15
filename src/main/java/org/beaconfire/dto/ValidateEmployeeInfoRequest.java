@@ -23,7 +23,7 @@ public class ValidateEmployeeInfoRequest {
     private Address currentAddress;
     private String cellPhone;
     private String workPhone;
-    private String email; // 不可编辑
+    private String email;
 
     private String ssn;
     private LocalDate dateOfBirth;

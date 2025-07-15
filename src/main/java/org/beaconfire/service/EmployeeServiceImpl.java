@@ -5,6 +5,7 @@ import org.beaconfire.dto.*;
 import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
+import org.beaconfire.model.DriverLicense;
 import org.beaconfire.model.Employee;
 import org.beaconfire.model.PersonalDocument;
 import org.beaconfire.model.VisaStatus;
@@ -31,7 +32,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         Employee employee = new Employee();
 
-        //basic info
+        // basic info
         employee.setUserId(request.getUserId());
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
@@ -40,7 +41,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setEmail(request.getEmail());
         employee.setAvatarPath(request.getAvatarPath());
         employee.setCellPhone(request.getCellPhone());
-        employee.setAlternatePhone(request.getWorkPhone()); // 映射 workPhone -> alternatePhone
+        employee.setWorkPhone(request.getWorkPhone());
         employee.setGender(request.getGender());
         employee.setSsn(request.getSsn());
         employee.setDob(request.getDob());
@@ -50,7 +51,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         // address
         employee.setAddressList(request.getAddresses());
 
-        // Visa status
+        // visa status
         if (request.getWorkAuthorization() != null) {
             VisaStatus visaStatus = new VisaStatus();
             visaStatus.setVisaType(request.getWorkAuthorization().getType());
@@ -68,11 +69,15 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setVisaStatuses(Collections.singletonList(visaStatus));
         }
 
-
-        // driver licence
+        // driver license
         if (request.getDriverLicense() != null) {
-            employee.setDriverLicense(request.getDriverLicense().getLicenseNumber());
-            employee.setDriverLicenseExpiration(request.getDriverLicense().getExpirationDate());
+            DriverLicense driverLicense = new DriverLicense();
+            driverLicense.setHasLicense(request.getDriverLicense().getHasLicense());
+            driverLicense.setLicenseNumber(request.getDriverLicense().getLicenseNumber());
+            driverLicense.setExpirationDate(request.getDriverLicense().getExpirationDate());
+            employee.setDriverLicense(driverLicense);
+        } else {
+            employee.setDriverLicense(null);
         }
 
         // contact
@@ -82,6 +87,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.save(employee);
         return "Employee created successfully.";
     }
+
 
 
     @Override
@@ -180,7 +186,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         response.setEmail(employee.getEmail());
         response.setAvatarPath(employee.getAvatarPath());
         response.setCellPhone(employee.getCellPhone());
-        response.setWorkPhone(employee.getAlternatePhone());
+        response.setWorkPhone(employee.getWorkPhone());
         response.setGender(employee.getGender());
         response.setSsn(employee.getSsn());
         response.setDob(employee.getDob());
@@ -191,8 +197,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employee.getAddressList() != null) {
             List<AddressDTO> addressDTOs = employee.getAddressList().stream().map(addr -> {
                 AddressDTO dto = new AddressDTO();
+                dto.setId(addr.getId());
                 dto.setAddressLine1(addr.getAddressLine1());
                 dto.setAddressLine2(addr.getAddressLine2());
+                //dto.setType(addr.getType());
                 dto.setCity(addr.getCity());
                 dto.setState(addr.getState());
                 dto.setZipCode(addr.getZipCode());
@@ -220,10 +228,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // driver license
         DriverLicenseDTO dlDTO = new DriverLicenseDTO();
-        if (employee.getDriverLicense() != null && !employee.getDriverLicense().isEmpty()) {
-            dlDTO.setHasLicense(true);
-            dlDTO.setLicenseNumber(employee.getDriverLicense());
-            dlDTO.setExpirationDate(employee.getDriverLicenseExpiration());
+        if (employee.getDriverLicense() != null) {
+            dlDTO.setHasLicense(employee.getDriverLicense().getHasLicense());
+            dlDTO.setLicenseNumber(employee.getDriverLicense().getLicenseNumber());
+            dlDTO.setExpirationDate(employee.getDriverLicense().getExpirationDate());
         } else {
             dlDTO.setHasLicense(false);
         }
@@ -233,6 +241,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employee.getContacts() != null) {
             List<EmergencyContactDTO> contactDTOs = employee.getContacts().stream().map(c -> {
                 EmergencyContactDTO dto = new EmergencyContactDTO();
+                dto.setId(c.getId());
                 dto.setFirstName(c.getFirstName());
                 dto.setLastName(c.getLastName());
                 dto.setCellPhone(c.getCellPhone());
@@ -245,10 +254,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         } else {
             response.setEmergencyContacts(new ArrayList<>());
         }
+        //response.setApplicationType(employee.getApplicationType());
+
 
         return response;
     }
-
 
     @Override
     public Employee getEmployeeById(String id) {
@@ -284,7 +294,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setMiddleName(request.getMiddleName());
         employee.setPreferredName(request.getPreferredName());
         employee.setCellPhone(request.getCellPhone());
-        employee.setAlternatePhone(request.getAlternatePhone());
+        employee.setWorkPhone(request.getWorkPhone());
         employee.setGender(request.getGender());
         employee.setSsn(request.getSsn());
         employee.setDob(request.getDob());
@@ -293,8 +303,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setWorkAuthType(request.getWorkAuthType());
         employee.setWorkAuthStartDate(request.getWorkAuthStartDate());
         employee.setWorkAuthEndDate(request.getWorkAuthEndDate());
-        employee.setDriverLicense(request.getDriverLicense());
-        employee.setDriverLicenseExpiration(request.getDriverLicenseExpiration());
+
+        DriverLicenseDTO driverLicenseDTO = request.getDriverLicense();
+        if (driverLicenseDTO != null) {
+            DriverLicense driverLicense = new DriverLicense();
+            driverLicense.setHasLicense(driverLicenseDTO.getHasLicense());
+            driverLicense.setLicenseNumber(driverLicenseDTO.getLicenseNumber());
+            driverLicense.setExpirationDate(driverLicenseDTO.getExpirationDate());
+            employee.setDriverLicense(driverLicense);
+        } else {
+            employee.setDriverLicense(null);
+        }
+
         employee.setLastModificationDate(LocalDateTime.now());
 
         return employeeRepository.save(employee);
@@ -310,6 +330,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         document.setComment(request.getComment());
         document.setCreateDate(LocalDateTime.now());
 
+        if (employee.getPersonalDocuments() == null) {
+            employee.setPersonalDocuments(new ArrayList<>());
+        }
         employee.getPersonalDocuments().add(document);
         employeeRepository.save(employee);
     }
