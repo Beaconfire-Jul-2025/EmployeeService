@@ -6,13 +6,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Contact {
-
+public class EmergencyContact  {
+    private String id;
     private String firstName;
     private String lastName;
-    private String cellPhone;
-    private String alternatePhone;
-    private String email;
     private String relationship;
-    private String type;
+    private String cellPhone;
 }

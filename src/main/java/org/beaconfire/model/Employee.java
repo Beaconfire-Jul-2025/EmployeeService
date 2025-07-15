@@ -10,53 +10,34 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Document(collection = "Employee")
+
+import lombok.*;
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Document(collection = "Employee")
 public class Employee {
 
     @Id
     private String id;
 
     private String userId;
+
     private String firstName;
     private String lastName;
-    private String middleName;
-    private String preferredName;
-    private String avatarPath;
     private String email;
-    private String cellPhone;
-    private String alternatePhone;
+
     private String gender;
-    private String ssn;
-    private LocalDate dob;
 
+    private LocalDate dob;         // 出生日期
+    private LocalDate startDate;   // 入职日期
 
-    // Employment Info
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private List<Address> addresses;
 
-    private String workAuthType;
-    private LocalDate workAuthStartDate;
-    private LocalDate workAuthEndDate;
+    private WorkAuthorization workAuthorization;
 
-    private String driverLicense;
-    private LocalDate driverLicenseExpiration;
+    private List<EmergencyContact> emergencyContacts;
 
-    // Housing Info
-    private String houseId;
-
-    // Embedded documents
-    private List<Address> addressList;
-    private List<Contact> contacts;
-    private List<VisaStatus> visaStatuses;
-    private List<PersonalDocument> personalDocuments;
-
-    // Status
-    private Boolean activeFlag;
-    private LocalDateTime createDate;
-    private LocalDateTime lastModificationDate;
-
+    private String applicationType;  // 例如：ONBOARD
 }

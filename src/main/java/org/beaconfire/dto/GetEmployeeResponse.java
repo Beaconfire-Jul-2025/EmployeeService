@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -24,11 +25,11 @@ public class GetEmployeeResponse {
     private String gender;
     private String ssn;
     private LocalDate dob;
-    private LocalDate startDate;
+    private LocalDateTime startDate;
     private String houseId;
-    private List<AddressDTO> addresses;
-    private WorkAuthorizationDTO workAuthorization;
+    private List<AddressRequest> addresses;
+    private WorkAuthorizationRequest workAuthorization;
     private DriverLicenseDTO driverLicense;
-    private List<EmergencyContactDTO> emergencyContacts;
+    private List<EmergencyContactRequest> emergencyContacts;
     private String applicationType;
 }
