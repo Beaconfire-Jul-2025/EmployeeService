@@ -24,7 +24,6 @@ class EmployeeMessageListenerTest {
     private EmployeeMessageListener employeeMessageListener;
 
 
-    private static final Logger log = LoggerFactory.getLogger(EmployeeMessageListenerTest.class);
 
 
     @Test
