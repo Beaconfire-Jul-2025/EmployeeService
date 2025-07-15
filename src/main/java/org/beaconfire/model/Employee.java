@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 
@@ -30,8 +30,8 @@ public class Employee {
 
     private String gender;
 
-    private LocalDate dob;         // 出生日期
-    private LocalDate startDate;   // 入职日期
+    private LocalDate dob;
+    private LocalDate startDate;
 
     private List<Address> addresses;
 
@@ -39,5 +39,5 @@ public class Employee {
 
     private List<EmergencyContact> emergencyContacts;
 
-    private String applicationType;  // 例如：ONBOARD
+    private String applicationType;
 }
