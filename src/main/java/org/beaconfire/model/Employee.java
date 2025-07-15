@@ -28,7 +28,7 @@ public class Employee {
     private String avatarPath;
     private String email;
     private String cellPhone;
-    private String alternatePhone;
+    private String workPhone;
     private String gender;
     private String ssn;
     private LocalDate dob;
@@ -42,8 +42,7 @@ public class Employee {
     private LocalDate workAuthStartDate;
     private LocalDate workAuthEndDate;
 
-    private String driverLicense;
-    private LocalDate driverLicenseExpiration;
+    private DriverLicense driverLicense;
 
     // Housing Info
     private String houseId;
