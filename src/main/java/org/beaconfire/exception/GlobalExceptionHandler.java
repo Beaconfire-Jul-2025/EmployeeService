@@ -1,42 +1,79 @@
 package org.beaconfire.exception;
 
+import org.beaconfire.dto.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Collections;
-import java.util.Map;
+import java.net.InetAddress;
+import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private String traceId() {
+        return MDC.get("traceId");
+    }
+
+    private String host() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    private ApiResponse<?> fail(String errorCode, String errorMessage, int showType) {
+        return ApiResponse.builder()
+                .success(false)
+                .errorCode(errorCode)
+                .errorMessage(errorMessage)
+                .showType(showType)
+                .traceId(traceId())
+                .host(host())
+                .build();
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ApiResponse<?> handleValidation(MethodArgumentNotValidException ex) {
+        String msg = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return fail("400001", msg, 2);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<?> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return new ResponseEntity<>(Collections.singletonMap("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    public ApiResponse<?> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return fail("400002", ex.getMessage(), 2);
     }
 
     @ExceptionHandler(EmployeeNotFoundException.class)
-    public ResponseEntity<?> handleEmployeeNotFound(EmployeeNotFoundException ex) {
-        return new ResponseEntity<>(
-                Collections.singletonMap("message", ex.getMessage()),
-                HttpStatus.NOT_FOUND
-        );
+    public ApiResponse<?> handleEmployeeNotFound(EmployeeNotFoundException ex) {
+        return fail("404001", ex.getMessage(), 2);
     }
+
     @ExceptionHandler(EmployeeAlreadyExistsException.class)
-    public ResponseEntity<?> handleEmployeeAlreadyExists(EmployeeAlreadyExistsException ex) {
-        return new ResponseEntity<>(Collections.singletonMap("message", ex.getMessage()), HttpStatus.BAD_REQUEST);
+    public ApiResponse<?> handleEmployeeAlreadyExists(EmployeeAlreadyExistsException ex) {
+        return fail("400003", ex.getMessage(), 2);
     }
+
     @ExceptionHandler(DocumentNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleDocumentNotFoundException(DocumentNotFoundException ex) {
-        return ResponseEntity.status(404).body(Collections.singletonMap("message", ex.getMessage()));
+    public ApiResponse<?> handleDocumentNotFoundException(DocumentNotFoundException ex) {
+        return fail("404002", ex.getMessage(), 2);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<?> handleException(Exception e) {
+    public ApiResponse<?> handleException(Exception e) {
         logger.error("Unhandled exception occurred", e);
-        return new ResponseEntity<>(Collections.singletonMap("message", "Internal Server Error"), HttpStatus.INTERNAL_SERVER_ERROR);
+        return fail("500000", "The system is busy, please try again later", 2);
     }
 }

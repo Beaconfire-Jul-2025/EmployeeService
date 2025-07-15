@@ -1,59 +1,29 @@
 package org.beaconfire.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.beaconfire.model.Address;
-
+import lombok.*;
 import java.time.LocalDate;
-
-
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ValidateEmployeeInfoRequest {
+
     private String firstName;
     private String lastName;
-    private String middleName;
-    private String preferredName;
-    private String avatarUrl;
-    private Address currentAddress;
-    private String cellPhone;
-    private String workPhone;
-    private String email; // 不可编辑
-
-    private String ssn;
-    private LocalDate dateOfBirth;
+    private String email;
     private String gender;
+    private LocalDateTime dob;
 
-    private String workAuthorizationType;
-    private LocalDate workAuthStartDate;
-    private LocalDate workAuthEndDate;
-    private String otherWorkAuthDescription;
-    private String workAuthDocumentPath;
+    private List<AddressRequest> addresses;
 
-    private Boolean hasDriverLicense;
-    private String driverLicenseNumber;
-    private LocalDate driverLicenseExpiration;
-    private String driverLicensePath;
+    private WorkAuthorizationRequest workAuthorization;
 
-    // Reference
-    private String refFirstName;
-    private String refLastName;
-    private String refMiddleName;
-    private String refPhone;
-    private String refAddress;
-    private String refEmail;
-    private String refRelationship;
+    private DriverLicenseDTO driverLicense;
 
-    // Emergency Contact
-    private String emergencyFirstName;
-    private String emergencyLastName;
-    private String emergencyMiddleName;
-    private String emergencyPhone;
-    private String emergencyEmail;
-    private String emergencyRelationship;
+    private List<EmergencyContactRequest> emergencyContacts;
+
+    private String applicationType;
 }

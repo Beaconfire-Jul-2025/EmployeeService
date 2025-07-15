@@ -12,4 +12,5 @@ public class EmergencyContact  {
     private String lastName;
     private String relationship;
     private String cellPhone;
+    private String email;
 }

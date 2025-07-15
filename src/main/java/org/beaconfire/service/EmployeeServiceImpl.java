@@ -5,15 +5,14 @@ import org.beaconfire.dto.*;
 import org.beaconfire.exception.DocumentNotFoundException;
 import org.beaconfire.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.exception.EmployeeNotFoundException;
-import org.beaconfire.model.Employee;
-import org.beaconfire.model.PersonalDocument;
-import org.beaconfire.model.VisaStatus;
+import org.beaconfire.model.*;
 import org.beaconfire.repository.EmployeeRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,64 +27,74 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (employeeRepository.existsByEmail(request.getEmail())) {
             throw new EmployeeAlreadyExistsException("Employee already exists with email: " + request.getEmail());
         }
+        List<Address> addressList = null;
+        if (request.getAddresses() != null) {
+            addressList = request.getAddresses().stream().map(addrReq -> Address.builder()
+                    .id(addrReq.getId())
+                    .type(addrReq.getType())
+                    .addressLine1(addrReq.getAddressLine1())
+                    .city(addrReq.getCity())
+                    .state(addrReq.getState())
+                    .zipCode(addrReq.getZipCode())
+                    .build()
+            ).collect(Collectors.toList());
+        }
+        List<EmergencyContact> emergencyContacts = null;
+        if (request.getEmergencyContacts() != null) {
+            emergencyContacts = request.getEmergencyContacts().stream().map(emcReq -> EmergencyContact.builder()
+                    .id(emcReq.getId())
+                    .firstName(emcReq.getFirstName())
+                    .lastName(emcReq.getLastName())
+                    .relationship(emcReq.getRelationship())
+                    .cellPhone(emcReq.getCellPhone())
+                    .build()
+            ).collect(Collectors.toList());
+        }
 
-        Employee employee = new Employee();
-
-        //basic info
-        employee.setUserId(request.getUserId());
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setMiddleName(request.getMiddleName());
-        employee.setPreferredName(request.getPreferredName());
-        employee.setEmail(request.getEmail());
-        employee.setAvatarPath(request.getAvatarPath());
-        employee.setCellPhone(request.getCellPhone());
-        employee.setAlternatePhone(request.getWorkPhone()); // 映射 workPhone -> alternatePhone
-        employee.setGender(request.getGender());
-        employee.setSsn(request.getSsn());
-        employee.setDob(request.getDob());
-        employee.setStartDate(request.getStartDate());
-        employee.setHouseId(request.getHouseId());
-
-        // address
-        employee.setAddressList(request.getAddresses());
-
-        // Visa status
+        WorkAuthorization workAuth = null;
         if (request.getWorkAuthorization() != null) {
-            VisaStatus visaStatus = new VisaStatus();
-            visaStatus.setVisaType(request.getWorkAuthorization().getType());
-            visaStatus.setStartDate(request.getWorkAuthorization().getStartDate());
-            visaStatus.setEndDate(request.getWorkAuthorization().getEndDate());
-
-            if (request.getWorkAuthorization().getLastModificationDate() != null) {
-                visaStatus.setLastModificationDate(request.getWorkAuthorization().getLastModificationDate().atStartOfDay());
-            }
-
-            employee.setWorkAuthType(request.getWorkAuthorization().getType());
-            employee.setWorkAuthStartDate(request.getWorkAuthorization().getStartDate());
-            employee.setWorkAuthEndDate(request.getWorkAuthorization().getEndDate());
-
-            employee.setVisaStatuses(Collections.singletonList(visaStatus));
+            workAuth = WorkAuthorization.builder()
+                    .isUsCitizen(request.getWorkAuthorization().getIsUsCitizen())
+                    .greenCardHolder(request.getWorkAuthorization().getGreenCardHolder())
+                    .type(request.getWorkAuthorization().getType())
+                    .startDate(request.getWorkAuthorization().getStartDate())
+                    .endDate(request.getWorkAuthorization().getEndDate())
+                    .lastModificationDate(request.getWorkAuthorization().getLastModificationDate())
+                    .build();
         }
-
-
-        // driver licence
+        DriverLicense driverLicense = null;
         if (request.getDriverLicense() != null) {
-            employee.setDriverLicense(request.getDriverLicense().getLicenseNumber());
-            employee.setDriverLicenseExpiration(request.getDriverLicense().getExpirationDate());
+            driverLicense = DriverLicense.builder()
+                    .hasLicense(request.getDriverLicense().getHasLicense())
+                    .licenseNumber(request.getDriverLicense().getLicenseNumber())
+                    .expirationDate(request.getDriverLicense().getExpirationDate())
+
+                    .build();
         }
 
-        // contact
-        employee.setContacts(request.getEmergencyContacts());
+        Employee employee = Employee.builder()
+                .userId(request.getUserId())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .gender(request.getGender())
+                .dob(request.getDob())
+                .addresses(addressList)
+                .workAuthorization(workAuth)
+                .emergencyContacts(emergencyContacts)
+                .startDate(request.getStartDate())
+                .driverLicense(driverLicense)
+                .applicationType(request.getApplicationType())
+                .build();
 
-        // save
         employeeRepository.save(employee);
         return "Employee created successfully.";
     }
 
 
     @Override
-    public String validateEmployeeInfo(ValidateEmployeeInfoRequest request){
+    public String validateEmployeeInfo(ValidateEmployeeInfoRequest request) {
+        // 基础字段校验
         if (request.getFirstName() == null || request.getFirstName().trim().isEmpty()) {
             throw new IllegalArgumentException("First Name is required");
         }
@@ -95,210 +104,307 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("Email is required");
         }
-        if (request.getSsn() == null || request.getSsn().trim().isEmpty()) {
-            throw new IllegalArgumentException("SSN is required");
-        }
-        if (request.getDateOfBirth() == null) {
+        if (request.getDob() == null) {
             throw new IllegalArgumentException("Date of Birth is required");
         }
         if (request.getGender() == null || request.getGender().trim().isEmpty()) {
             throw new IllegalArgumentException("Gender is required");
         }
-        //If not a citizen or green card, check for work authorization
-        if (!"Citizen".equalsIgnoreCase(request.getWorkAuthorizationType())
-                && !"Green Card".equalsIgnoreCase(request.getWorkAuthorizationType())) {
-            if (request.getWorkAuthStartDate() == null || request.getWorkAuthEndDate() == null) {
-                throw new IllegalArgumentException("Work authorization dates are required");
-            }
-            if (request.getWorkAuthDocumentPath() == null || request.getWorkAuthDocumentPath().trim().isEmpty()) {
-                throw new IllegalArgumentException("Work authorization document is required");
-            }
+
+        if (request.getAddresses() == null || request.getAddresses().isEmpty()) {
+            throw new IllegalArgumentException("At least one address is required");
         }
-        //valid address info
-        if (request.getCurrentAddress() == null
-                || request.getCurrentAddress().getAddressLine1() == null || request.getCurrentAddress().getAddressLine1().trim().isEmpty()
-                || request.getCurrentAddress().getCity() == null || request.getCurrentAddress().getCity().trim().isEmpty()
-                || request.getCurrentAddress().getState() == null || request.getCurrentAddress().getState().trim().isEmpty()
-                || request.getCurrentAddress().getZipCode() == null || request.getCurrentAddress().getZipCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("Current Address with all required fields is required");
+        AddressRequest primaryAddress = request.getAddresses().get(0);
+        if (primaryAddress.getAddressLine1() == null || primaryAddress.getAddressLine1().trim().isEmpty()
+                || primaryAddress.getCity() == null || primaryAddress.getCity().trim().isEmpty()
+                || primaryAddress.getState() == null || primaryAddress.getState().trim().isEmpty()
+                || primaryAddress.getZipCode() == null || primaryAddress.getZipCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("Primary address fields are required");
         }
 
-        // If employee have a driver's license, check the license information
-        if (Boolean.TRUE.equals(request.getHasDriverLicense())) {
-            if (request.getDriverLicenseNumber() == null || request.getDriverLicenseNumber().trim().isEmpty()) {
+        if (request.getWorkAuthorization() != null) {
+            WorkAuthorizationRequest wa = request.getWorkAuthorization();
+
+            // 基础校验
+            if (wa.getIsUsCitizen() == null && wa.getGreenCardHolder() == null && (wa.getType() == null || wa.getType().trim().isEmpty())) {
+                throw new IllegalArgumentException("Work authorization information is incomplete");
+            }
+
+            // 如果不是公民或绿卡，校验日期字段
+            boolean notCitizen = Boolean.FALSE.equals(wa.getIsUsCitizen());
+            boolean notGreenCard = Boolean.FALSE.equals(wa.getGreenCardHolder());
+
+            if ((notCitizen && notGreenCard) &&
+                    (wa.getStartDate() == null || wa.getEndDate() == null)) {
+                throw new IllegalArgumentException("Work authorization start and end dates are required for non-citizen and non-green card holders");
+            }
+        }
+
+        if (request.getDriverLicense() != null && Boolean.TRUE.equals(request.getDriverLicense().getHasLicense())) {
+            DriverLicenseDTO dl = request.getDriverLicense();
+            if (dl.getLicenseNumber() == null || dl.getLicenseNumber().trim().isEmpty()) {
                 throw new IllegalArgumentException("Driver license number is required");
             }
-            if (request.getDriverLicenseExpiration() == null) {
+            if (dl.getExpirationDate() == null) {
                 throw new IllegalArgumentException("Driver license expiration date is required");
             }
-            if (request.getDriverLicensePath() == null || request.getDriverLicensePath().trim().isEmpty()) {
-                throw new IllegalArgumentException("Driver license document is required");
-            }
         }
-        //valid reference info
-        if (request.getRefFirstName() == null || request.getRefFirstName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Reference First Name is required");
+
+        if (request.getEmergencyContacts() == null || request.getEmergencyContacts().isEmpty()) {
+            throw new IllegalArgumentException("At least one emergency contact is required");
         }
-        if (request.getRefPhone() == null || request.getRefPhone().trim().isEmpty()) {
-            throw new IllegalArgumentException("Reference Phone is required");
+        EmergencyContactRequest ec = request.getEmergencyContacts().get(0);
+        if (ec.getFirstName() == null || ec.getFirstName().trim().isEmpty()
+                || ec.getCellPhone() == null || ec.getCellPhone().trim().isEmpty()
+                || ec.getRelationship() == null || ec.getRelationship().trim().isEmpty()) {
+            throw new IllegalArgumentException("Emergency contact fields are required");
         }
-        if (request.getRefEmail() == null || request.getRefEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Reference Email is required");
-        }
-        if (request.getRefRelationship() == null || request.getRefRelationship().trim().isEmpty()) {
-            throw new IllegalArgumentException("Reference Relationship is required");
-        }
-        // Must have an emergency contact
-        if (request.getEmergencyFirstName() == null || request.getEmergencyPhone() == null) {
-            throw new IllegalArgumentException("Emergency contact is required");
-        }
-        if (request.getEmergencyEmail() == null || request.getEmergencyEmail().trim().isEmpty()) {
-            throw new IllegalArgumentException("Emergency contact email is required");
-        }
-        if (request.getEmergencyRelationship() == null || request.getEmergencyRelationship().trim().isEmpty()) {
-            throw new IllegalArgumentException("Emergency contact relationship is required");
-        }
+
         Employee employee = employeeRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with email: " + request.getEmail()));
 
         return employee.getId();
     }
+
     @Override
     public GetEmployeeResponse getEmployeeProfileById(String id) {
-        Employee employee = getEmployeeById(id);
-        if (employee == null) {
-            throw new EmployeeNotFoundException("Employee not found with id: " + id);
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + id));
+        // 地址
+        List<AddressRequest> addressDTOs = null;
+        if (employee.getAddresses() != null) {
+            addressDTOs = employee.getAddresses().stream().map(addr -> AddressRequest.builder()
+                    .id(addr.getId())
+                    .type(addr.getType())
+                    .addressLine1(addr.getAddressLine1())
+                    .city(addr.getCity())
+                    .state(addr.getState())
+                    .zipCode(addr.getZipCode())
+                    .build()
+            ).collect(Collectors.toList());
         }
 
-        GetEmployeeResponse response = new GetEmployeeResponse();
-        response.setId(employee.getId());
-        response.setUserId(employee.getUserId());
-        response.setFirstName(employee.getFirstName());
-        response.setLastName(employee.getLastName());
-        response.setMiddleName(employee.getMiddleName());
-        response.setPreferredName(employee.getPreferredName());
-        response.setEmail(employee.getEmail());
-        response.setAvatarPath(employee.getAvatarPath());
-        response.setCellPhone(employee.getCellPhone());
-        response.setWorkPhone(employee.getAlternatePhone());
-        response.setGender(employee.getGender());
-        response.setSsn(employee.getSsn());
-        response.setDob(employee.getDob());
-        response.setStartDate(employee.getStartDate());
-        response.setHouseId(employee.getHouseId());
 
-        // addresses
-        if (employee.getAddressList() != null) {
-            List<AddressDTO> addressDTOs = employee.getAddressList().stream().map(addr -> {
-                AddressDTO dto = new AddressDTO();
-                dto.setAddressLine1(addr.getAddressLine1());
-                dto.setAddressLine2(addr.getAddressLine2());
-                dto.setCity(addr.getCity());
-                dto.setState(addr.getState());
-                dto.setZipCode(addr.getZipCode());
-                return dto;
-            }).collect(Collectors.toList());
-            response.setAddresses(addressDTOs);
-        } else {
-            response.setAddresses(new ArrayList<>());
+        // 工作授权
+        WorkAuthorizationRequest workAuthDTO = null;
+        if (employee.getWorkAuthorization() != null) {
+            Boolean isUsCitizen = employee.getWorkAuthorization().getIsUsCitizen();
+            Boolean greenCardHolder = employee.getWorkAuthorization().getGreenCardHolder();
+
+            WorkAuthorizationRequest.WorkAuthorizationRequestBuilder builder = WorkAuthorizationRequest.builder()
+                    .isUsCitizen(isUsCitizen)
+                    .greenCardHolder(greenCardHolder)
+                    .type(employee.getWorkAuthorization().getType());
+
+            // 如果既不是美国公民，也不是绿卡
+            if (Boolean.FALSE.equals(isUsCitizen) && Boolean.FALSE.equals(greenCardHolder)) {
+                builder
+                        .startDate(employee.getWorkAuthorization().getStartDate())
+                        .endDate(employee.getWorkAuthorization().getEndDate());
+            }
+
+            workAuthDTO = builder.build();
         }
 
-        // work authorization
-        if (employee.getVisaStatuses() != null && !employee.getVisaStatuses().isEmpty()) {
-            VisaStatus visa = employee.getVisaStatuses().get(0);
-            WorkAuthorizationDTO waDTO = new WorkAuthorizationDTO();
-            waDTO.setType(visa.getVisaType());
-            waDTO.setStartDate(visa.getStartDate());
-            waDTO.setEndDate(visa.getEndDate());
-            waDTO.setLastModificationDate(
-                    visa.getLastModificationDate() != null ? visa.getLastModificationDate().toLocalDate() : null
-            );
-            waDTO.setIsUsCitizen(false);
-            waDTO.setGreenCardHolder(false);
-            response.setWorkAuthorization(waDTO);
+
+        // 驾照
+        DriverLicenseDTO driverLicenseDTO = null;
+        if (employee.getDriverLicense() != null) {
+            driverLicenseDTO = DriverLicenseDTO.builder()
+                    .hasLicense(employee.getDriverLicense().getHasLicense())
+                    .licenseNumber(employee.getDriverLicense().getLicenseNumber())
+                    .expirationDate(employee.getDriverLicense().getExpirationDate())
+                    .build();
+        }
+        // 紧急联系人
+        List<EmergencyContactRequest> contactDTOs = null;
+        if (employee.getEmergencyContacts() != null) {
+            contactDTOs = employee.getEmergencyContacts().stream().map(c -> EmergencyContactRequest.builder()
+                    .id(c.getId())
+                    .firstName(c.getFirstName())
+                    .lastName(c.getLastName())
+                    .relationship(c.getRelationship())
+                    .email(c.getEmail())
+                    .cellPhone(c.getCellPhone())
+                    .build()
+            ).collect(Collectors.toList());
         }
 
-        // driver license
-        DriverLicenseDTO dlDTO = new DriverLicenseDTO();
-        if (employee.getDriverLicense() != null && !employee.getDriverLicense().isEmpty()) {
-            dlDTO.setHasLicense(true);
-            dlDTO.setLicenseNumber(employee.getDriverLicense());
-            dlDTO.setExpirationDate(employee.getDriverLicenseExpiration());
-        } else {
-            dlDTO.setHasLicense(false);
-        }
-        response.setDriverLicense(dlDTO);
-
-        // emergency contacts
-        if (employee.getContacts() != null) {
-            List<EmergencyContactDTO> contactDTOs = employee.getContacts().stream().map(c -> {
-                EmergencyContactDTO dto = new EmergencyContactDTO();
-                dto.setFirstName(c.getFirstName());
-                dto.setLastName(c.getLastName());
-                dto.setCellPhone(c.getCellPhone());
-                dto.setEmail(c.getEmail());
-                dto.setRelationship(c.getRelationship());
-                dto.setType(c.getType());
-                return dto;
-            }).collect(Collectors.toList());
-            response.setEmergencyContacts(contactDTOs);
-        } else {
-            response.setEmergencyContacts(new ArrayList<>());
-        }
+        // 组装响应
+        GetEmployeeResponse response = GetEmployeeResponse.builder()
+                .id(employee.getId())
+                .userId(employee.getUserId())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .gender(employee.getGender())
+                .dob(employee.getDob())
+                .startDate(employee.getStartDate())
+                .addresses(addressDTOs)
+                .workAuthorization(workAuthDTO)
+                .driverLicense(driverLicenseDTO)
+                .emergencyContacts(contactDTOs)
+                .applicationType(employee.getApplicationType())
+                .build();
 
         return response;
     }
 
 
     @Override
-    public Employee getEmployeeById(String id) {
-        return employeeRepository.findById(id)
-                .orElseThrow(() -> new EmployeeNotFoundException(id));
-    }
-    @Override
     public Employee registerEmployee(CreateEmployeeRequest request) {
+        // 校验邮箱是否存在
         if (employeeRepository.existsByEmail(request.getEmail())) {
-            throw new EmployeeAlreadyExistsException(request.getEmail());
+            throw new EmployeeAlreadyExistsException("Employee already exists with email: " + request.getEmail());
         }
+
+        // 地址转换
+        List<Address> addressList = null;
+        if (request.getAddresses() != null) {
+            addressList = request.getAddresses().stream().map(addrReq -> Address.builder()
+                    .id(addrReq.getId())
+                    .type(addrReq.getType())
+                    .addressLine1(addrReq.getAddressLine1())
+                    .city(addrReq.getCity())
+                    .state(addrReq.getState())
+                    .zipCode(addrReq.getZipCode())
+                    .build()
+            ).collect(Collectors.toList());
+        }
+
+        // 紧急联系人转换
+        List<EmergencyContact> contactList = null;
+        if (request.getEmergencyContacts() != null) {
+            contactList = request.getEmergencyContacts().stream().map(c -> EmergencyContact.builder()
+                    .id(c.getId())
+                    .firstName(c.getFirstName())
+                    .lastName(c.getLastName())
+                    .relationship(c.getRelationship())
+                    .cellPhone(c.getCellPhone())
+                    .build()
+            ).collect(Collectors.toList());
+        }
+
+        // 工作授权转换
+        WorkAuthorization workAuth = null;
+        if (request.getWorkAuthorization() != null) {
+            workAuth = WorkAuthorization.builder()
+                    .isUsCitizen(request.getWorkAuthorization().getIsUsCitizen())
+                    .greenCardHolder(request.getWorkAuthorization().getGreenCardHolder())
+                    .type(request.getWorkAuthorization().getType())
+                    .build();
+        }
+        // 驾照转换
+        DriverLicense driverLicense = null;
+        if (request.getDriverLicense() != null) {
+            driverLicense = DriverLicense.builder()
+                    .hasLicense(request.getDriverLicense().getHasLicense())
+                    .licenseNumber(request.getDriverLicense().getLicenseNumber())
+                    .expirationDate(request.getDriverLicense().getExpirationDate())
+                    .build();
+        }
+
+        // 创建 Employee 对象
         Employee employee = Employee.builder()
                 .userId(request.getUserId())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .middleName(request.getMiddleName())
                 .email(request.getEmail())
-                .activeFlag(true)
-                .createDate(LocalDateTime.now())
-                .lastModificationDate(LocalDateTime.now())
+                .gender(request.getGender())
+                .dob(request.getDob())
+                .startDate(request.getStartDate())
+                .addresses(addressList)
+                .workAuthorization(workAuth)
+                .driverLicense(driverLicense)
+                .emergencyContacts(contactList)
+                .applicationType(request.getApplicationType())
                 .build();
-        employee.setPersonalDocuments(new ArrayList<>());
 
         return employeeRepository.save(employee);
     }
+
     @Override
     public Employee updateEmployee(String id, UpdateEmployeeRequest request) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setMiddleName(request.getMiddleName());
-        employee.setPreferredName(request.getPreferredName());
-        employee.setCellPhone(request.getCellPhone());
-        employee.setAlternatePhone(request.getAlternatePhone());
-        employee.setGender(request.getGender());
-        employee.setSsn(request.getSsn());
-        employee.setDob(request.getDob());
-        employee.setStartDate(request.getStartDate());
-        employee.setEndDate(request.getEndDate());
-        employee.setWorkAuthType(request.getWorkAuthType());
-        employee.setWorkAuthStartDate(request.getWorkAuthStartDate());
-        employee.setWorkAuthEndDate(request.getWorkAuthEndDate());
-        employee.setDriverLicense(request.getDriverLicense());
-        employee.setDriverLicenseExpiration(request.getDriverLicenseExpiration());
-        employee.setLastModificationDate(LocalDateTime.now());
+        // 更新基本信息
+        if (request.getFirstName() != null) {
+            employee.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            employee.setLastName(request.getLastName());
+        }
+        if (request.getEmail() != null) {
+            employee.setEmail(request.getEmail());
+        }
+        if (request.getGender() != null) {
+            employee.setGender(request.getGender());
+        }
+        if (request.getDob() != null) {
+            employee.setDob(request.getDob());
+        }
+        if (request.getStartDate() != null) {
+            employee.setStartDate(request.getStartDate());
+        }
+        if (request.getApplicationType() != null) {
+            employee.setApplicationType(request.getApplicationType());
+        }
+
+        // 更新地址
+        if (request.getAddresses() != null) {
+            List<Address> addressList = request.getAddresses().stream().map(addrReq -> Address.builder()
+                    .id(addrReq.getId())
+                    .type(addrReq.getType())
+                    .addressLine1(addrReq.getAddressLine1())
+                    .city(addrReq.getCity())
+                    .state(addrReq.getState())
+                    .zipCode(addrReq.getZipCode())
+                    .build()
+            ).collect(Collectors.toList());
+            employee.setAddresses(addressList);
+        }
+
+        // 更新工作授权
+        if (request.getWorkAuthorization() != null) {
+            WorkAuthorization workAuth = WorkAuthorization.builder()
+                    .isUsCitizen(request.getWorkAuthorization().getIsUsCitizen())
+                    .greenCardHolder(request.getWorkAuthorization().getGreenCardHolder())
+                    .type(request.getWorkAuthorization().getType())
+                    .startDate(request.getWorkAuthorization().getStartDate())
+                    .endDate(request.getWorkAuthorization().getEndDate())
+                    .lastModificationDate(request.getWorkAuthorization().getLastModificationDate())
+                    .build();
+            employee.setWorkAuthorization(workAuth);
+        }
+
+        // 更新驾驶证
+        if (request.getDriverLicense() != null) {
+            DriverLicense driverLicense = DriverLicense.builder()
+                    .hasLicense(request.getDriverLicense().getHasLicense())
+                    .licenseNumber(request.getDriverLicense().getLicenseNumber())
+                    .expirationDate(request.getDriverLicense().getExpirationDate())
+                    .build();
+            employee.setDriverLicense(driverLicense);
+        }
+
+        // 更新紧急联系人
+        if (request.getEmergencyContacts() != null) {
+            List<EmergencyContact> contactList = request.getEmergencyContacts().stream().map(c -> EmergencyContact.builder()
+                    .id(c.getId())
+                    .firstName(c.getFirstName())
+                    .lastName(c.getLastName())
+                    .relationship(c.getRelationship())
+                    .cellPhone(c.getCellPhone())
+                    .build()
+            ).collect(Collectors.toList());
+            employee.setEmergencyContacts(contactList);
+        }
 
         return employeeRepository.save(employee);
     }
+
+
     @Override
     public void uploadDocument(String employeeId, UploadDocumentRequest request) {
         Employee employee = employeeRepository.findById(employeeId)
@@ -310,9 +416,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         document.setComment(request.getComment());
         document.setCreateDate(LocalDateTime.now());
 
+        // 先检查 personalDocuments 是否为 null
+        if (employee.getPersonalDocuments() == null) {
+            employee.setPersonalDocuments(new ArrayList<>());
+        }
+
         employee.getPersonalDocuments().add(document);
         employeeRepository.save(employee);
     }
+
     @Override
     public GetDocumentsResponse getDocumentsByEmployeeId(String employeeId) {
         Employee employee = employeeRepository.findById(employeeId)
@@ -348,14 +460,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
     @Override
     public List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId) {
-        List<Employee> employees = employeeRepository.findByHouseId(houseId);
+        // 找出包含指定 houseId 的员工，直接比较顶层字段 houseId
+        List<Employee> allEmployees = employeeRepository.findAll();
+
+        List<Employee> filteredEmployees = allEmployees.stream()
+                .filter(e -> houseId.equals(e.getHouseId()))
+                .collect(Collectors.toList());
         List<GetEmployeeByHouseResponse> responses = new ArrayList<>();
 
-        for (Employee e : employees) {
-            String name = (e.getPreferredName()!= null && !e.getPreferredName().isEmpty())
-                    ? e.getPreferredName()
-                    : e.getFirstName();
-            String phone = e.getCellPhone();
+        for (Employee e : filteredEmployees) {
+            String name = e.getFirstName();
+            String phone = null;
+            if (e.getEmergencyContacts() != null && !e.getEmergencyContacts().isEmpty()) {
+                phone = e.getEmergencyContacts().get(0).getCellPhone();
+            }
+
             responses.add(new GetEmployeeByHouseResponse(name, phone));
         }
         return responses;
@@ -364,39 +483,201 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public List<GetEmployeeResponse> searchEmployeesByName(String name) {
         List<Employee> employees = employeeRepository
-                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-                        name, name, name);
+                .findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name);
 
         List<GetEmployeeResponse> responses = new ArrayList<>();
+
         for (Employee e : employees) {
-            GetEmployeeResponse response = new GetEmployeeResponse();
-            response.setId(e.getId());
-            response.setFirstName(e.getFirstName());
-            response.setLastName(e.getLastName());
-            response.setPreferredName(e.getPreferredName());
-            response.setEmail(e.getEmail());
-            response.setCellPhone(e.getCellPhone());
+            DriverLicenseDTO driverLicenseDTO = null;
+            if (e.getDriverLicense() != null) {
+                driverLicenseDTO = DriverLicenseDTO.builder()
+                        .hasLicense(e.getDriverLicense().getHasLicense())
+                        .licenseNumber(e.getDriverLicense().getLicenseNumber())
+                        .expirationDate(e.getDriverLicense().getExpirationDate())
+                        .build();
+            }
+
+            // 构建地址
+            List<AddressRequest> addressDTOs = null;
+            if (e.getAddresses() != null) {
+                addressDTOs = e.getAddresses().stream().map(addr -> AddressRequest.builder()
+                        .id(addr.getId())
+                        .type(addr.getType())
+                        .addressLine1(addr.getAddressLine1())
+                        .city(addr.getCity())
+                        .state(addr.getState())
+                        .zipCode(addr.getZipCode())
+                        .build()
+                ).collect(Collectors.toList());
+            }
+
+            // 构建紧急联系人
+            List<EmergencyContactRequest> contactDTOs = null;
+            if (e.getEmergencyContacts() != null) {
+                contactDTOs = e.getEmergencyContacts().stream().map(c -> EmergencyContactRequest.builder()
+                        .id(c.getId())
+                        .firstName(c.getFirstName())
+                        .lastName(c.getLastName())
+                        .relationship(c.getRelationship())
+                        .cellPhone(c.getCellPhone())
+                        .build()
+                ).collect(Collectors.toList());
+            }
+
+            // 构建工作授权
+            WorkAuthorizationRequest workAuthDTO = null;
+            if (e.getWorkAuthorization() != null) {
+                workAuthDTO = WorkAuthorizationRequest.builder()
+                        .isUsCitizen(e.getWorkAuthorization().getIsUsCitizen())
+                        .greenCardHolder(e.getWorkAuthorization().getGreenCardHolder())
+                        .type(e.getWorkAuthorization().getType())
+                        .startDate(e.getWorkAuthorization().getStartDate())
+                        .endDate(e.getWorkAuthorization().getEndDate())
+                        .lastModificationDate(e.getWorkAuthorization().getLastModificationDate())
+                        .build();
+            }
+
+            // 构建响应对象
+            GetEmployeeResponse response = GetEmployeeResponse.builder()
+                    .id(e.getId())
+                    .userId(e.getUserId())
+                    .firstName(e.getFirstName())
+                    .lastName(e.getLastName())
+                    .email(e.getEmail())
+                    .gender(e.getGender())
+                    .dob(e.getDob())
+                    .addresses(addressDTOs)
+                    .workAuthorization(workAuthDTO)
+                    .driverLicense(driverLicenseDTO)
+                    .emergencyContacts(contactDTOs)
+                    .applicationType(e.getApplicationType())
+                    .build();
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+
+    @Override
+    public List<GetEmployeeResponse> getAllEmployees() {
+        List<Employee> employees = employeeRepository.findAll();
+        List<GetEmployeeResponse> responses = new ArrayList<>();
+
+        for (Employee e : employees) {
+            // DriverLicenseDTO
+            DriverLicenseDTO driverLicenseDTO = null;
+            if (e.getDriverLicense() != null) {
+                driverLicenseDTO = DriverLicenseDTO.builder()
+                        .hasLicense(e.getDriverLicense().getHasLicense())
+                        .licenseNumber(e.getDriverLicense().getLicenseNumber())
+                        .expirationDate(e.getDriverLicense().getExpirationDate())
+                        .build();
+            }
+
+            // 地址
+            List<AddressRequest> addressDTOs = null;
+            if (e.getAddresses() != null) {
+                addressDTOs = e.getAddresses().stream().map(addr -> AddressRequest.builder()
+                        .id(addr.getId())
+                        .type(addr.getType())
+                        .addressLine1(addr.getAddressLine1())
+                        .city(addr.getCity())
+                        .state(addr.getState())
+                        .zipCode(addr.getZipCode())
+                        .build()
+                ).collect(Collectors.toList());
+            }
+
+            // 紧急联系人
+            List<EmergencyContactRequest> contactDTOs = null;
+            if (e.getEmergencyContacts() != null) {
+                contactDTOs = e.getEmergencyContacts().stream().map(c -> EmergencyContactRequest.builder()
+                        .id(c.getId())
+                        .firstName(c.getFirstName())
+                        .lastName(c.getLastName())
+                        .relationship(c.getRelationship())
+                        .cellPhone(c.getCellPhone())
+                        .build()
+                ).collect(Collectors.toList());
+            }
+
+            // 工作授权
+            WorkAuthorizationRequest workAuthDTO = null;
+            if (e.getWorkAuthorization() != null) {
+                workAuthDTO = WorkAuthorizationRequest.builder()
+                        .isUsCitizen(e.getWorkAuthorization().getIsUsCitizen())
+                        .greenCardHolder(e.getWorkAuthorization().getGreenCardHolder())
+                        .type(e.getWorkAuthorization().getType())
+                        .startDate(e.getWorkAuthorization().getStartDate())
+                        .endDate(e.getWorkAuthorization().getEndDate())
+                        .lastModificationDate(e.getWorkAuthorization().getLastModificationDate())
+                        .build();
+            }
+
+            // 构建响应对象
+            GetEmployeeResponse response = GetEmployeeResponse.builder()
+                    .id(e.getId())
+                    .userId(e.getUserId())
+                    .firstName(e.getFirstName())
+                    .lastName(e.getLastName())
+                    .email(e.getEmail())
+                    .gender(e.getGender())
+                    .dob(e.getDob())
+                    .addresses(addressDTOs)
+                    .workAuthorization(workAuthDTO)
+                    .driverLicense(driverLicenseDTO)
+                    .emergencyContacts(contactDTOs)
+                    .applicationType(e.getApplicationType())
+                    .build();
+
             responses.add(response);
         }
         return responses;
     }
 
     @Override
-    public List<GetEmployeeResponse> getAllEmployees() {
-        List<Employee> employees = employeeRepository.findAll();
+    public Page<GetEmployeeResponse> getAllEmployeesPaged(Pageable pageable) {
+        Page<Employee> employeePage = employeeRepository.findAll(pageable);
+        return employeePage.map(employee -> convertToResponse(employee));
+    }
 
-        List<GetEmployeeResponse> responses = new ArrayList<>();
-        for (Employee e : employees) {
-            GetEmployeeResponse response = new GetEmployeeResponse();
-            response.setId(e.getId());
-            response.setFirstName(e.getFirstName());
-            response.setLastName(e.getLastName());
-            response.setPreferredName(e.getPreferredName());
-            response.setEmail(e.getEmail());
-            response.setCellPhone(e.getCellPhone());
-            responses.add(response);
-        }
-        return responses;
+    @Override
+    public Page<GetEmployeeResponse> searchEmployeesByNamePaged(String name, Pageable pageable) {
+        Page<Employee> employeePage = employeeRepository.findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(name, name, pageable);
+        return employeePage.map(employee -> convertToResponse(employee));
+    }
+    private GetEmployeeResponse convertToResponse(Employee employee) {
+        return GetEmployeeResponse.builder()
+                .id(employee.getId())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .dob(employee.getDob())
+                .startDate(employee.getStartDate())
+                .build();
+    }
+
+    @Override
+    public Page<GetEmployeeByHouseResponse> getEmployeesByHouseIdPaged(String houseId, Pageable pageable) {
+        // 查询带分页的 Employee
+        Page<Employee> employeePage = employeeRepository.findByHouseId(houseId, pageable);
+
+        // 转换为 Page<GetEmployeeByHouseResponse>
+        Page<GetEmployeeByHouseResponse> responsePage = employeePage.map(employee -> {
+            // 只取 firstName 当作 name（如果需要可以拼接 lastName）
+            String name = employee.getFirstName();
+
+            String phone = null;
+            if (employee.getEmergencyContacts() != null && !employee.getEmergencyContacts().isEmpty()) {
+                phone = employee.getEmergencyContacts().get(0).getCellPhone();
+            }
+
+            return new GetEmployeeByHouseResponse(name, phone);
+        });
+
+        return responsePage;
     }
 
 

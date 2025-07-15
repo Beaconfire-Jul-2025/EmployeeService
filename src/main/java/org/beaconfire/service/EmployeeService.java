@@ -2,6 +2,8 @@ package org.beaconfire.service;
 
 import org.beaconfire.dto.*;
 import org.beaconfire.model.Employee;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -9,7 +11,6 @@ import java.util.List;
 public interface EmployeeService {
     String createEmployee(CreateEmployeeRequest request);
     String validateEmployeeInfo(ValidateEmployeeInfoRequest request);
-    Employee getEmployeeById(String id);
     Employee registerEmployee(CreateEmployeeRequest request);
     Employee updateEmployee(String id, UpdateEmployeeRequest request);
     void uploadDocument(String employeeId, UploadDocumentRequest request);
@@ -19,7 +20,13 @@ public interface EmployeeService {
 
     List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId);
 
+    List<GetEmployeeResponse> getAllEmployees();
+
     List<GetEmployeeResponse> searchEmployeesByName(String name);
 
-    List<GetEmployeeResponse> getAllEmployees();
+    Page<GetEmployeeResponse> getAllEmployeesPaged(Pageable pageable);
+
+    Page<GetEmployeeResponse> searchEmployeesByNamePaged(String name, Pageable pageable);
+    Page<GetEmployeeByHouseResponse> getEmployeesByHouseIdPaged(String houseId, Pageable pageable);
+
 }

@@ -1,6 +1,8 @@
 package org.beaconfire.repository;
 
 import org.beaconfire.model.Employee;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,7 +14,8 @@ import java.util.Optional;
 public interface EmployeeRepository extends MongoRepository<Employee, String> {
     Optional<Employee> findByEmail(String email);
     boolean existsByEmail(String email);
-    List<Employee> findByHouseId(String houseId);
-    List<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseOrPreferredNameContainingIgnoreCase(
-            String firstName, String lastName, String preferredName);
+    List<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName);
+    Page<Employee> findByHouseId(String houseId, Pageable pageable);
+    Page<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName, Pageable pageable);
+
 }

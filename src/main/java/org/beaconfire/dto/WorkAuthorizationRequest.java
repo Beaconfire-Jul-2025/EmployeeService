@@ -2,6 +2,8 @@ package org.beaconfire.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -11,4 +13,7 @@ public class WorkAuthorizationRequest {
     private Boolean isUsCitizen;
     private Boolean greenCardHolder;
     private String type;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    private LocalDateTime lastModificationDate;
 }

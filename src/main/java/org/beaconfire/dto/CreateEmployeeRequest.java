@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -23,14 +24,15 @@ public class CreateEmployeeRequest {
 
     private String gender;
 
-    private LocalDate dob;
-    private LocalDate startDate;
+    private LocalDateTime dob;
 
     private List<AddressRequest> addresses;
+    private LocalDateTime startDate;
 
     private WorkAuthorizationRequest workAuthorization;
 
     private List<EmergencyContactRequest> emergencyContacts;
+    private DriverLicenseDTO driverLicense;
 
     private String applicationType;
 }

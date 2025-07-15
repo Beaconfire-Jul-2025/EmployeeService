@@ -5,12 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdateDocumentRequest {
-    private String title;
-    private String path;
-    private String comment;
+@Builder
+public class PageListResponse<T> {
+    private List<T> list;
+    private int current;
+    private int pageSize;
+    private long total;
 }

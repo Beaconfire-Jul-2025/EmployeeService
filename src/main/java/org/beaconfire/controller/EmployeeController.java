@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.beaconfire.dto.*;
 import org.beaconfire.model.Employee;
 import org.beaconfire.service.EmployeeService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -68,22 +72,39 @@ public class EmployeeController {
         return ResponseEntity.ok(response);
     }
     @GetMapping
-    public ResponseEntity<List<GetEmployeeResponse>> getEmployees(@RequestParam(value = "name", required = false) String fullName) {
+    public ResponseEntity<PageListResponse<GetEmployeeResponse>> getEmployees(
+            @RequestParam(value = "name", required = false) String fullName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) authentication.getPrincipal();
         String username = (String) authentication.getDetails();
-
         System.out.println("getEmployees - userId: " + userId + ", username: " + username + ", fullName: " + fullName);
 
-        List<GetEmployeeResponse> responses;
-        if (fullName != null && !fullName.isEmpty()) {
-            responses = employeeService.searchEmployeesByName(fullName);
-        } else {
-            responses = employeeService.getAllEmployees();
-        }
-        return ResponseEntity.ok(responses);
-    }
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
+        Page<GetEmployeeResponse> employeePage;
+        if (fullName != null && !fullName.isEmpty()) {
+            employeePage = employeeService.searchEmployeesByNamePaged(fullName, pageable);
+        } else {
+            employeePage = employeeService.getAllEmployeesPaged(pageable);
+        }
+
+        PageListResponse<GetEmployeeResponse> response = PageListResponse.<GetEmployeeResponse>builder()
+                .list(employeePage.getContent())
+                .current(employeePage.getNumber() + 1)
+                .pageSize(employeePage.getSize())
+                .total(employeePage.getTotalElements())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEmployee(@PathVariable String id, @RequestBody UpdateEmployeeRequest request) {
@@ -140,20 +161,35 @@ public class EmployeeController {
         return ResponseEntity.ok(Collections.singletonMap("message", "Document updated successfully"));
     }
     @GetMapping("/house/{houseId}")
-    public ResponseEntity<List<GetEmployeeByHouseResponse>> getEmployeesByHouse(@PathVariable String houseId) {
+    public ResponseEntity<PageListResponse<GetEmployeeByHouseResponse>> getEmployeesByHouse(
+            @PathVariable String houseId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+    ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) authentication.getPrincipal();
         String username = (String) authentication.getDetails();
-
         System.out.println("getEmployeesByHouse - userId: " + userId + ", username: " + username + ", houseId: " + houseId);
-        List<GetEmployeeByHouseResponse> employees = employeeService.getEmployeesByHouseId(houseId);
-        return ResponseEntity.ok(employees);
+
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<GetEmployeeByHouseResponse> employeePage = employeeService.getEmployeesByHouseIdPaged(houseId, pageable);
+
+        PageListResponse<GetEmployeeByHouseResponse> response = PageListResponse.<GetEmployeeByHouseResponse>builder()
+                .list(employeePage.getContent())
+                .current(employeePage.getNumber() + 1) // Page 是从 0 开始，所以要 +1
+                .pageSize(employeePage.getSize())
+                .total(employeePage.getTotalElements())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/search")
-    public List<GetEmployeeResponse> searchEmployees(@RequestParam("name") String name) {
-        return employeeService.searchEmployeesByName(name);
-    }
 
 }
 
