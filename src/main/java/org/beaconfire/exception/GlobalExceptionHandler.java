@@ -4,13 +4,13 @@ import org.beaconfire.dto.ApiResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.net.InetAddress;
-import java.util.NoSuchElementException;
+
 import java.util.stream.Collectors;
 
 @RestControllerAdvice

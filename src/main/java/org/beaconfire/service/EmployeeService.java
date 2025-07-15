@@ -18,7 +18,6 @@ public interface EmployeeService {
     void updateDocument(String employeeId, UpdateDocumentRequest request);
     GetEmployeeResponse getEmployeeProfileById(String id);
 
-    List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId);
 
     List<GetEmployeeResponse> getAllEmployees();
 

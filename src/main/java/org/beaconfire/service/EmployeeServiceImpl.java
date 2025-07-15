@@ -458,27 +458,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeeRepository.save(employee);
     }
-    @Override
-    public List<GetEmployeeByHouseResponse> getEmployeesByHouseId(String houseId) {
-        // 找出包含指定 houseId 的员工，直接比较顶层字段 houseId
-        List<Employee> allEmployees = employeeRepository.findAll();
-
-        List<Employee> filteredEmployees = allEmployees.stream()
-                .filter(e -> houseId.equals(e.getHouseId()))
-                .collect(Collectors.toList());
-        List<GetEmployeeByHouseResponse> responses = new ArrayList<>();
-
-        for (Employee e : filteredEmployees) {
-            String name = e.getFirstName();
-            String phone = null;
-            if (e.getEmergencyContacts() != null && !e.getEmergencyContacts().isEmpty()) {
-                phone = e.getEmergencyContacts().get(0).getCellPhone();
-            }
-
-            responses.add(new GetEmployeeByHouseResponse(name, phone));
-        }
-        return responses;
-    }
 
     @Override
     public List<GetEmployeeResponse> searchEmployeesByName(String name) {
@@ -664,9 +643,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         // 查询带分页的 Employee
         Page<Employee> employeePage = employeeRepository.findByHouseId(houseId, pageable);
 
-        // 转换为 Page<GetEmployeeByHouseResponse>
         Page<GetEmployeeByHouseResponse> responsePage = employeePage.map(employee -> {
-            // 只取 firstName 当作 name（如果需要可以拼接 lastName）
+            // 只取 firstName 当作 name
             String name = employee.getFirstName();
 
             String phone = null;
