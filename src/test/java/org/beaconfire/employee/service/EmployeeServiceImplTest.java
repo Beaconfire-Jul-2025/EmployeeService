@@ -1,6 +1,7 @@
 package org.beaconfire.employee.service;
 
 import org.beaconfire.employee.dto.*;
+import org.beaconfire.employee.exception.DocumentAlreadyExistsException;
 import org.beaconfire.employee.exception.DocumentNotFoundException;
 import org.beaconfire.employee.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.employee.exception.EmployeeNotFoundException;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class EmployeeServiceImplTest {
@@ -178,6 +180,30 @@ class EmployeeServiceImplTest {
         employeeService.updateDocument("emp1", request);
 
         assertThat(employee.getPersonalDocuments().get(0).getTitle()).isEqualTo("Updated");
+    }
+    @Test
+    public void testUploadDocument_ThrowsWhenDocumentAlreadyExists() {
+        // Arrange
+        String employeeId = "emp123";
+        UploadDocumentRequest request = new UploadDocumentRequest();
+        request.setPath("/documents/driver_license.pdf");
+        request.setType("DRIVER_LICENSE");
+        request.setTitle("Driver License");
+
+        PersonalDocument existingDoc = new PersonalDocument();
+        existingDoc.setPath("/documents/driver_license.pdf");
+
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+        employee.setPersonalDocuments(new ArrayList<>());
+        employee.getPersonalDocuments().add(existingDoc);
+
+        when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+
+        // Act & Assert
+        assertThrows(DocumentAlreadyExistsException.class, () -> {
+            employeeService.uploadDocument(employeeId, request);
+        });
     }
 
     @Test

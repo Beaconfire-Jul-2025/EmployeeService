@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PersonalDocument {
 
+    private String type;
     private String path;
     private String title;
     private String comment;

@@ -3,6 +3,7 @@ package org.beaconfire.employee.service;
 import lombok.RequiredArgsConstructor;
 
 import org.beaconfire.employee.dto.*;
+import org.beaconfire.employee.exception.DocumentAlreadyExistsException;
 import org.beaconfire.employee.exception.DocumentNotFoundException;
 import org.beaconfire.employee.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.employee.exception.EmployeeNotFoundException;
@@ -412,18 +413,25 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EmployeeNotFoundException("Employee not found with id: " + employeeId));
 
-        PersonalDocument document = new PersonalDocument();
-        document.setTitle(request.getTitle());
-        document.setPath(request.getPath());
-        document.setComment(request.getComment());
-        document.setCreateDate(LocalDateTime.now());
-
         // 先检查 personalDocuments 是否为 null
         if (employee.getPersonalDocuments() == null) {
             employee.setPersonalDocuments(new ArrayList<>());
         }
+        List<PersonalDocument> documents = employee.getPersonalDocuments();
+        boolean exists = documents.stream()
+                .anyMatch(doc -> doc.getPath().equals(request.getPath()));
+        if (exists) {
+            throw new DocumentAlreadyExistsException("A document with the same path already exists. Please use update instead.");
+        }
+        PersonalDocument newDocument = new PersonalDocument();
+        newDocument.setType(request.getType());
+        newDocument.setTitle(request.getTitle());
+        newDocument.setPath(request.getPath());
+        newDocument.setComment(request.getComment());
+        newDocument.setCreateDate(LocalDateTime.now());
 
-        employee.getPersonalDocuments().add(document);
+
+        documents.add(newDocument);
         employeeRepository.save(employee);
     }
 
@@ -454,10 +462,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         PersonalDocument doc = optionalDoc.get();
-        doc.setTitle(request.getTitle());
-        doc.setComment(request.getComment());
-        doc.setPath(request.getPath());
-
+        if (request.getType() != null) {
+            doc.setType(request.getType());
+        }
+        if (request.getTitle() != null) {
+            doc.setTitle(request.getTitle());
+        }
+        if (request.getComment() != null) {
+            doc.setComment(request.getComment());
+        }
+        if (request.getPath() != null) {
+            doc.setPath(request.getPath());
+        }
+        if (request.getCreateDate() != null) {
+            doc.setCreateDate(request.getCreateDate());
+        }
         employeeRepository.save(employee);
     }
 

@@ -74,6 +74,11 @@ public class GlobalExceptionHandler {
         return fail("404002", ex.getMessage(), 2);
     }
 
+    @ExceptionHandler(DocumentAlreadyExistsException.class)
+    public ApiResponse<?> handleDocumentAlreadyExists(DocumentAlreadyExistsException ex) {
+        return fail("400004", ex.getMessage(), 2);
+    }
+
     @ExceptionHandler(NoSuchElementException.class)
     public ApiResponse<?> handleNoSuchElementException(NoSuchElementException ex) {
         return fail("404003", ex.getMessage(), 2);
