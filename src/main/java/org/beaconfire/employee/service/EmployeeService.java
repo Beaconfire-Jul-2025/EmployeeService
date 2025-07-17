@@ -29,4 +29,5 @@ public interface EmployeeService {
     Page<GetEmployeeResponse> searchEmployeesByNamePaged(String name, Pageable pageable);
     Page<GetEmployeeByHouseResponse> getEmployeesByHouseIdPaged(String houseId, Pageable pageable);
 
+    GetEmployeeResponse getEmployeeProfileByUserId(String userId);
 }

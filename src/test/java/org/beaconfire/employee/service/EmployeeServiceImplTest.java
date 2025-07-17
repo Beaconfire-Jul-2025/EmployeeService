@@ -5,9 +5,7 @@ import org.beaconfire.employee.exception.DocumentAlreadyExistsException;
 import org.beaconfire.employee.exception.DocumentNotFoundException;
 import org.beaconfire.employee.exception.EmployeeAlreadyExistsException;
 import org.beaconfire.employee.exception.EmployeeNotFoundException;
-import org.beaconfire.employee.model.Address;
-import org.beaconfire.employee.model.Employee;
-import org.beaconfire.employee.model.PersonalDocument;
+import org.beaconfire.employee.model.*;
 
 import org.beaconfire.employee.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +20,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class EmployeeServiceImplTest {
@@ -254,5 +252,83 @@ class EmployeeServiceImplTest {
         Page<GetEmployeeResponse> responses = employeeService.getAllEmployeesPaged(PageRequest.of(0, 10));
 
         assertThat(responses.getContent()).hasSize(2);
+    }
+    @Test
+    public void testGetEmployeeProfileByUserId_Success() {
+        // Arrange
+        String userId = "2";
+        Employee employee = Employee.builder()
+                .id("emp123")
+                .userId(userId)
+                .firstName("John")
+                .lastName("Doe")
+                .email("john@example.com")
+                .gender("Male")
+                .dob(LocalDate.of(1990, 1, 1).atStartOfDay())
+                .startDate(LocalDate.of(2022, 1, 1).atStartOfDay())
+                .addresses(Collections.singletonList(
+                        Address.builder()
+                                .id("addr1")
+                                .type("PRIMARY")
+                                .addressLine1("123 Main St")
+                                .city("City")
+                                .state("State")
+                                .zipCode("12345")
+                                .build()
+                ))
+                .emergencyContacts(Collections.singletonList(
+                        EmergencyContact.builder()
+                                .id("emg1")
+                                .firstName("Jane")
+                                .lastName("Smith")
+                                .relationship("Friend")
+                                .email("jane@example.com")
+                                .cellPhone("555-1234")
+                                .build()
+                ))
+                .workAuthorization(WorkAuthorization.builder()
+                        .isUsCitizen(false)
+                        .greenCardHolder(false)
+                        .type("OPT")
+                        .startDate(LocalDate.of(2022, 1, 1).atStartOfDay())
+                        .endDate(LocalDate.of(2024, 1, 1).atStartOfDay())
+                        .lastModificationDate(LocalDate.of(2023, 1, 1).atStartOfDay())
+                        .build())
+                .driverLicense(DriverLicense.builder()
+                        .hasLicense(true)
+                        .licenseNumber("D12345678")
+                        .expirationDate(LocalDate.of(2026, 12, 31).atStartOfDay())
+                        .build())
+                .applicationType("Onboarding")
+                .build();
+
+        when(employeeRepository.findByUserId(userId)).thenReturn(Optional.of(employee));
+
+        // Act
+        GetEmployeeResponse response = employeeService.getEmployeeProfileByUserId(userId);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals("John", response.getFirstName());
+        assertEquals("Doe", response.getLastName());
+        assertEquals("2", response.getUserId());
+        assertEquals("D12345678", response.getDriverLicense().getLicenseNumber());
+        assertEquals("OPT", response.getWorkAuthorization().getType());
+
+        verify(employeeRepository, times(1)).findByUserId(userId);
+    }
+    @Test
+    public void testGetEmployeeProfileByUserId_NotFound() {
+        // Arrange
+        String userId = "999";
+        when(employeeRepository.findByUserId(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        EmployeeNotFoundException ex = assertThrows(EmployeeNotFoundException.class,
+                () -> employeeService.getEmployeeProfileByUserId(userId));
+
+        assertTrue(ex.getMessage().contains("Employee not found for userId: 999"));
+
+        verify(employeeRepository, times(1)).findByUserId(userId);
     }
 }

@@ -188,6 +188,17 @@ public class EmployeeController {
 
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/profile")
+    public ResponseEntity<GetEmployeeResponse> getMyProfile() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) authentication.getPrincipal();
+        String username = (String) authentication.getDetails();
+        System.out.println("getMyProfile - userId: " + userId + ", username: " + username);
+
+        GetEmployeeResponse response = employeeService.getEmployeeProfileByUserId(userId);
+        return ResponseEntity.ok(response);
+    }
+
 
 
 }

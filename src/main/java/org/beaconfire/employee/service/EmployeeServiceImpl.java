@@ -678,6 +678,82 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return responsePage;
     }
+    @Override
+    public GetEmployeeResponse getEmployeeProfileByUserId(String userId) {
+        Employee employee = employeeRepository.findByUserId(userId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found for userId: " + userId));
+
+        // 地址
+        List<AddressRequest> addressDTOs = null;
+        if (employee.getAddresses() != null) {
+            addressDTOs = employee.getAddresses().stream().map(addr -> AddressRequest.builder()
+                    .id(addr.getId())
+                    .type(addr.getType())
+                    .addressLine1(addr.getAddressLine1())
+                    .city(addr.getCity())
+                    .state(addr.getState())
+                    .zipCode(addr.getZipCode())
+                    .build()
+            ).collect(Collectors.toList());
+        }
+
+        // 工作授权
+        WorkAuthorizationRequest workAuthDTO = null;
+        if (employee.getWorkAuthorization() != null) {
+            WorkAuthorization wa = employee.getWorkAuthorization();
+            WorkAuthorizationRequest.WorkAuthorizationRequestBuilder builder = WorkAuthorizationRequest.builder()
+                    .isUsCitizen(wa.getIsUsCitizen())
+                    .greenCardHolder(wa.getGreenCardHolder())
+                    .type(wa.getType())
+                    .startDate(wa.getStartDate())
+                    .endDate(wa.getEndDate())
+                    .lastModificationDate(wa.getLastModificationDate());
+            workAuthDTO = builder.build();
+        }
+
+        // 驾照
+        DriverLicenseDTO driverLicenseDTO = null;
+        if (employee.getDriverLicense() != null) {
+            driverLicenseDTO = DriverLicenseDTO.builder()
+                    .hasLicense(employee.getDriverLicense().getHasLicense())
+                    .licenseNumber(employee.getDriverLicense().getLicenseNumber())
+                    .expirationDate(employee.getDriverLicense().getExpirationDate())
+                    .build();
+        }
+
+        // 紧急联系人
+        List<EmergencyContactRequest> contactDTOs = null;
+        if (employee.getEmergencyContacts() != null) {
+            contactDTOs = employee.getEmergencyContacts().stream().map(c -> EmergencyContactRequest.builder()
+                    .id(c.getId())
+                    .firstName(c.getFirstName())
+                    .lastName(c.getLastName())
+                    .relationship(c.getRelationship())
+                    .email(c.getEmail())
+                    .cellPhone(c.getCellPhone())
+                    .build()
+            ).collect(Collectors.toList());
+        }
+
+        // 构建响应对象
+        GetEmployeeResponse response = GetEmployeeResponse.builder()
+                .id(employee.getId())
+                .userId(employee.getUserId())
+                .firstName(employee.getFirstName())
+                .lastName(employee.getLastName())
+                .email(employee.getEmail())
+                .gender(employee.getGender())
+                .dob(employee.getDob())
+                .startDate(employee.getStartDate())
+                .addresses(addressDTOs)
+                .workAuthorization(workAuthDTO)
+                .driverLicense(driverLicenseDTO)
+                .emergencyContacts(contactDTOs)
+                .applicationType(employee.getApplicationType())
+                .build();
+
+        return response;
+    }
 
 
 
