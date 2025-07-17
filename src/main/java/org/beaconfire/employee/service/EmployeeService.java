@@ -30,4 +30,6 @@ public interface EmployeeService {
     Page<GetEmployeeByHouseResponse> getEmployeesByHouseIdPaged(String houseId, Pageable pageable);
 
     GetEmployeeResponse getEmployeeProfileByUserId(String userId);
+
+    List<RoommateResponse> getRoommates(String userId);
 }

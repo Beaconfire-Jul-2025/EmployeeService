@@ -331,4 +331,73 @@ class EmployeeServiceImplTest {
 
         verify(employeeRepository, times(1)).findByUserId(userId);
     }
+    @Test
+    void getRoommates_shouldReturnRoommatesInSameHouse() {
+        // 当前登录用户
+        Employee me = new Employee();
+        me.setUserId("user010");
+        me.setHouseId("house123");
+
+        // 同一house的其他员工
+        Employee roommate1 = new Employee();
+        roommate1.setUserId("user011");
+        roommate1.setFirstName("Bob");
+        roommate1.setPreferredName(null);
+        roommate1.setCellPhone("555-222-3333");
+        roommate1.setHouseId("house123");
+
+        Employee outsider = new Employee();
+        outsider.setUserId("user999");
+        outsider.setFirstName("Eve");
+        outsider.setPreferredName("Evie");
+        outsider.setCellPhone("000-000-0000");
+        outsider.setHouseId("house999");
+
+        when(employeeRepository.findByUserId("user010")).thenReturn(Optional.of(me));
+        when(employeeRepository.findAll()).thenReturn(Arrays.asList(me, roommate1, outsider));
+
+        List<RoommateResponse> result = employeeService.getRoommates("user010");
+
+        assertEquals(1, result.size());
+
+        RoommateResponse roommate = result.get(0);
+        assertEquals("Bob", roommate.getName());
+        assertEquals("555-222-3333", roommate.getPhone());
+    }
+
+    @Test
+    void getRoommates_shouldReturnEmptyListIfNoRoommates() {
+        Employee me = new Employee();
+        me.setUserId("user010");
+        me.setHouseId("house123");
+
+        when(employeeRepository.findByUserId("user010")).thenReturn(Optional.of(me));
+        when(employeeRepository.findAll()).thenReturn(Arrays.asList(me));
+
+        List<RoommateResponse> result = employeeService.getRoommates("user010");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getRoommates_shouldThrowExceptionIfUserNotFound() {
+        when(employeeRepository.findByUserId("nonexistent")).thenReturn(Optional.empty());
+
+        assertThrows(EmployeeNotFoundException.class, () -> {
+            employeeService.getRoommates("nonexistent");
+        });
+    }
+
+    @Test
+    void getRoommates_shouldReturnEmptyListIfHouseIdIsNull() {
+        Employee me = new Employee();
+        me.setUserId("user010");
+        me.setHouseId(null);
+
+        when(employeeRepository.findByUserId("user010")).thenReturn(Optional.of(me));
+
+        List<RoommateResponse> result = employeeService.getRoommates("user010");
+
+        assertTrue(result.isEmpty());
+    }
 }

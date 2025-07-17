@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -198,6 +199,17 @@ public class EmployeeController {
         GetEmployeeResponse response = employeeService.getEmployeeProfileByUserId(userId);
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/roommates")
+    public ResponseEntity<List<RoommateResponse>> getRoommates() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = (String) authentication.getPrincipal();
+        String username = (String) authentication.getDetails();
+        System.out.println("getRoommates - userId: " + userId + ", username: " + username);
+
+        List<RoommateResponse> roommates = employeeService.getRoommates(userId);
+        return ResponseEntity.ok(roommates);
+    }
+
 
 
 
