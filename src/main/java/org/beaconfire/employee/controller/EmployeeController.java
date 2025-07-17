@@ -5,8 +5,8 @@ import org.beaconfire.employee.dto.CreateEmployeeRequest;
 import org.beaconfire.employee.dto.PageListResponse;
 import org.beaconfire.employee.model.Employee;
 import org.beaconfire.employee.service.EmployeeService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +15,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping()
 @AllArgsConstructor
+@PreAuthorize("hasAnyRole('HR', 'COMPOSITE')")
 public class EmployeeController {
 
     private EmployeeService employeeService;

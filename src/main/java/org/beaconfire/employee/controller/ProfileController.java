@@ -3,12 +3,15 @@ package org.beaconfire.employee.controller;
 import lombok.AllArgsConstructor;
 import org.beaconfire.employee.model.Employee;
 import org.beaconfire.employee.service.EmployeeService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/profile")
 @AllArgsConstructor
+@PreAuthorize("hasAnyRole('EMPLOYEE')")
 public class ProfileController {
     private EmployeeService employeeService;
 

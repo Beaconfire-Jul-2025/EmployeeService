@@ -92,4 +92,12 @@ public class EmployeeService {
         List<Employee> employees = mongoTemplate.find(query, Employee.class);
         return new org.springframework.data.domain.PageImpl<>(employees, pageable, total);
     }
+
+    public List<Employee> findRoommatesByHouseId(String houseId, String excludeUserId) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("houseId").is(houseId)
+                .and("applicationType").is("profile")
+                .and("userId").ne(excludeUserId));
+        return mongoTemplate.find(query, Employee.class);
+    }
 }
