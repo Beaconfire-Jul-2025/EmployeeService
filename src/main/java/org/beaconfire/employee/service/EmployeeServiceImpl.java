@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -755,6 +756,26 @@ public class EmployeeServiceImpl implements EmployeeService {
         return response;
     }
 
+    @Override
+    public List<RoommateResponse> getRoommates(String userId) {
+        Employee me = employeeRepository.findByUserId(userId)
+                .orElseThrow(() -> new EmployeeNotFoundException("Employee not found for userId: " + userId));
+
+        String myHouseId = me.getHouseId();
+        if (myHouseId == null) {
+            return Collections.emptyList(); // 或者抛异常
+        }
+        List<Employee> all = employeeRepository.findAll();
+        return all.stream()
+                .filter(e -> myHouseId.equals(e.getHouseId()) && !e.getUserId().equals(userId))
+                .map(e -> RoommateResponse.builder()
+                        .name(e.getPreferredName() != null && !e.getPreferredName().isEmpty()
+                                ? e.getPreferredName()
+                                : e.getFirstName())
+                        .phone(e.getCellPhone())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
 
 }
