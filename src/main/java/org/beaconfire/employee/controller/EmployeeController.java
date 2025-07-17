@@ -1,205 +1,64 @@
 package org.beaconfire.employee.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.beaconfire.employee.dto.*;
+import lombok.AllArgsConstructor;
+import org.beaconfire.employee.dto.CreateEmployeeRequest;
+import org.beaconfire.employee.dto.PageListResponse;
 import org.beaconfire.employee.model.Employee;
 import org.beaconfire.employee.service.EmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-
-import javax.validation.Valid;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequiredArgsConstructor
+@RequestMapping()
+@AllArgsConstructor
 public class EmployeeController {
 
-    private final EmployeeService employeeService;
-    @PostMapping("/validate-info")
-    public ResponseEntity<ValidateEmployeeInfoResponse>  validateEmployeeInfo(@RequestBody @Valid ValidateEmployeeInfoRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
+    private EmployeeService employeeService;
 
-        System.out.println("validateEmployeeInfo - userId: " + userId + ", username: " + username);
+    @GetMapping
+    public PageListResponse<Employee> getEmployees(
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDir
+    ) {
+        Page<Employee> employees = employeeService.getEmployees(firstName, lastName, email, page, size, sortBy, sortDir);
+        return PageListResponse.<Employee>builder()
+                .list(employees.getContent())
+                .current(employees.getNumber())
+                .pageSize(employees.getSize())
+                .total(employees.getTotalElements())
+                .build();
+    }
 
-        String employeeId = employeeService.validateEmployeeInfo(request);
-
-        ValidateEmployeeInfoResponse response = new ValidateEmployeeInfoResponse(
-                employeeId,
-                "Onboarding application submitted successfully. Please wait for HR review."
-        );
-        return ResponseEntity.ok(response);
+    @GetMapping("/{userId}")
+    public Employee getEmployeeById(@PathVariable String userId) {
+        Optional<Employee> employee = employeeService.getEmployeeById(userId);
+        return employee.orElse(null);
     }
 
     @PostMapping
-    public ResponseEntity<?> createEmployee(@RequestBody CreateEmployeeRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("createEmployee - userId: " + userId + ", username: " + username);
-
-        Employee savedEmployee = employeeService.registerEmployee(request);
-
-        CreateEmployeeResponse response = new CreateEmployeeResponse(
-                savedEmployee.getId(),
-                "Employee profile created"
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<GetEmployeeResponse> getEmployee(@PathVariable String id) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("getEmployee - userId: " + userId + ", username: " + username);
-
-        GetEmployeeResponse response = employeeService.getEmployeeProfileById(id);
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping
-    public ResponseEntity<PageListResponse<GetEmployeeResponse>> getEmployees(
-            @RequestParam(value = "name", required = false) String fullName,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-        System.out.println("getEmployees - userId: " + userId + ", username: " + username + ", fullName: " + fullName);
-
-        Sort sort = sortDir.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<GetEmployeeResponse> employeePage;
-        if (fullName != null && !fullName.isEmpty()) {
-            employeePage = employeeService.searchEmployeesByNamePaged(fullName, pageable);
-        } else {
-            employeePage = employeeService.getAllEmployeesPaged(pageable);
-        }
-
-        PageListResponse<GetEmployeeResponse> response = PageListResponse.<GetEmployeeResponse>builder()
-                .list(employeePage.getContent())
-                .current(employeePage.getNumber() + 1)
-                .pageSize(employeePage.getSize())
-                .total(employeePage.getTotalElements())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateEmployee(@PathVariable String id, @RequestBody UpdateEmployeeRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("updateEmployee - userId: " + userId + ", username: " + username);
-
-        employeeService.updateEmployee(id, request);
-        return ResponseEntity.ok(Collections.singletonMap("message", "Employee profile updated"));
-    }
-
-    @PostMapping("/{id}/documents")
-    public ResponseEntity<Map<String, String>> uploadDocument(
-            @PathVariable("id") String employeeId,
-            @RequestBody UploadDocumentRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("uploadDocument - userId: " + userId + ", username: " + username);
-
-        employeeService.uploadDocument(employeeId, request);
+    public Map<String, String> createEmployee(@RequestBody CreateEmployeeRequest request) {
+        Employee employee = employeeService.createEmployee(request);
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Document uploaded");
-        return ResponseEntity.status(201).body(response);
+        response.put("employeeId", employee.getUserId());
+        return response;
     }
 
-    @GetMapping("/{id}/documents")
-    public ResponseEntity<GetDocumentsResponse> getDocuments(@PathVariable("id") String employeeId) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("getDocuments - userId: " + userId + ", username: " + username);
-
-        GetDocumentsResponse response = employeeService.getDocumentsByEmployeeId(employeeId);
-        return ResponseEntity.ok(response);
+    @PutMapping("/{userId}")
+    public Employee updateEmployee(@PathVariable String userId, @RequestBody Employee employee) {
+        return employeeService.updateEmployee(userId, employee);
     }
 
-    @PutMapping("/{id}/documents")
-    public ResponseEntity<Map<String, String>> updateDocument(
-            @PathVariable("id") String employeeId,
-            @RequestBody UpdateDocumentRequest request) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-
-        System.out.println("updateDocument - userId: " + userId + ", username: " + username);
-
-        employeeService.updateDocument(employeeId, request);
-        return ResponseEntity.ok(Collections.singletonMap("message", "Document updated successfully"));
+    @DeleteMapping("/{userId}")
+    public void deleteEmployee(@PathVariable String userId) {
+        employeeService.deleteEmployee(userId);
     }
-    @GetMapping("/house/{houseId}")
-    public ResponseEntity<PageListResponse<GetEmployeeByHouseResponse>> getEmployeesByHouse(
-            @PathVariable String houseId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir
-    ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-        System.out.println("getEmployeesByHouse - userId: " + userId + ", username: " + username + ", houseId: " + houseId);
-
-        Sort sort = sortDir.equalsIgnoreCase("desc")
-                ? Sort.by(sortBy).descending()
-                : Sort.by(sortBy).ascending();
-        Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<GetEmployeeByHouseResponse> employeePage = employeeService.getEmployeesByHouseIdPaged(houseId, pageable);
-
-        PageListResponse<GetEmployeeByHouseResponse> response = PageListResponse.<GetEmployeeByHouseResponse>builder()
-                .list(employeePage.getContent())
-                .current(employeePage.getNumber() + 1) // Page 是从 0 开始，所以要 +1
-                .pageSize(employeePage.getSize())
-                .total(employeePage.getTotalElements())
-                .build();
-
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping("/profile")
-    public ResponseEntity<GetEmployeeResponse> getMyProfile() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = (String) authentication.getPrincipal();
-        String username = (String) authentication.getDetails();
-        System.out.println("getMyProfile - userId: " + userId + ", username: " + username);
-
-        GetEmployeeResponse response = employeeService.getEmployeeProfileByUserId(userId);
-        return ResponseEntity.ok(response);
-    }
-
-
-
 }
-

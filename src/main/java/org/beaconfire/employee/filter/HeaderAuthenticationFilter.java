@@ -1,5 +1,6 @@
 package org.beaconfire.employee.filter;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -12,23 +13,32 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 
 @Component
 @Slf4j
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
+
     @Override
-    protected boolean shouldNotFilter(javax.servlet.http.HttpServletRequest request) {
+    protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/actuator/");
+        // Exclude actuator, swagger-ui, and openapi-docs from this filter
+        return path.startsWith("/actuator")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/openapi/api-docs");
     }
 
     @Override
     protected void doFilterInternal(
-            javax.servlet.http.HttpServletRequest request,
-            javax.servlet.http.HttpServletResponse response,
-            javax.servlet.FilterChain filterChain)
-            throws javax.servlet.ServletException, java.io.IOException {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException {
+
         String userId = request.getHeader("x-User-Id");
         String username = request.getHeader("x-Username");
         String rolesHeader = request.getHeader("x-Roles");
@@ -46,7 +56,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(auth);
             filterChain.doFilter(request, response);
         } else {
-            response.sendError(javax.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
         }
     }
 }

@@ -1,15 +1,12 @@
 package org.beaconfire.employee.model;
 
-import lombok.*;
-import java.time.LocalDateTime;
+import lombok.Data;
+import java.util.Date;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class DriverLicense {
-
     private Boolean hasLicense;
     private String licenseNumber;
-    private LocalDateTime expirationDate;
+    private Date expirationDate;
 }
+

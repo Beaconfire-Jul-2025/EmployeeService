@@ -1,17 +1,15 @@
 package org.beaconfire.employee.model;
 
-import lombok.*;
-import java.time.LocalDateTime;
+import lombok.Data;
+import java.util.Date;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class PersonalDocument {
-
-    private String type;
+    private String id;
+    private String type; // DRIVER_LICENSE_PROOF, WORK_AUTHORIZATION_PROOF, SSN_CARD, PASSPORT, OTHER
     private String path;
     private String title;
     private String comment;
-    private LocalDateTime createDate;
+    private Date createDate;
 }
+

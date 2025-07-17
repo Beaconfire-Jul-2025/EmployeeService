@@ -1,33 +1,88 @@
 package org.beaconfire.employee.service;
 
-
-import org.beaconfire.employee.dto.*;
 import org.beaconfire.employee.model.Employee;
+import org.beaconfire.employee.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.beaconfire.employee.dto.CreateEmployeeRequest;
 
-import java.util.List;
+@Service
+public class EmployeeService {
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
-public interface EmployeeService {
-    String createEmployee(CreateEmployeeRequest request);
-    String validateEmployeeInfo(ValidateEmployeeInfoRequest request);
-    Employee registerEmployee(CreateEmployeeRequest request);
-    Employee updateEmployee(String id, UpdateEmployeeRequest request);
-    void uploadDocument(String employeeId, UploadDocumentRequest request);
-    GetDocumentsResponse getDocumentsByEmployeeId(String employeeId);
-    void updateDocument(String employeeId, UpdateDocumentRequest request);
-    GetEmployeeResponse getEmployeeProfileById(String id);
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
 
+    public Optional<Employee> getEmployeeById(String userId) {
+        return employeeRepository.findById(userId);
+    }
 
-    List<GetEmployeeResponse> getAllEmployees();
+    public Employee createEmployee(CreateEmployeeRequest request) {
+        Employee employee = Employee.builder()
+            .firstName(request.getFirstName())
+            .lastName(request.getLastName())
+            .middleName(request.getMiddleName())
+            .preferredName(request.getPreferredName())
+            .avatarPath(request.getAvatarPath())
+            .email(request.getEmail())
+            .cellPhone(request.getCellPhone())
+            .alternatePhone(request.getAlternatePhone())
+            .gender(request.getGender())
+            .ssn(request.getSsn())
+            .dob(request.getDob())
+            .startDate(request.getStartDate())
+            .endDate(request.getEndDate())
+            .houseId(request.getHouseId())
+            .addresses(request.getAddresses())
+            .workAuthorization(request.getWorkAuthorization())
+            .driverLicense(request.getDriverLicense())
+            .emergencyContacts(request.getEmergencyContacts())
+            .references(request.getReferences())
+            .personalDocuments(request.getPersonalDocuments())
+            .applicationType(request.getApplicationType())
+            .build();
+        return employeeRepository.save(employee);
+    }
 
-    List<GetEmployeeResponse> searchEmployeesByName(String name);
+    public Employee updateEmployee(String userId, Employee employee) {
+        employee.setUserId(userId);
+        return employeeRepository.save(employee);
+    }
 
-    Page<GetEmployeeResponse> getAllEmployeesPaged(Pageable pageable);
+    public void deleteEmployee(String userId) {
+        employeeRepository.deleteById(userId);
+    }
 
-    Page<GetEmployeeResponse> searchEmployeesByNamePaged(String name, Pageable pageable);
-    Page<GetEmployeeByHouseResponse> getEmployeesByHouseIdPaged(String houseId, Pageable pageable);
-
-    GetEmployeeResponse getEmployeeProfileByUserId(String userId);
+    public Page<Employee> getEmployees(String firstName, String lastName, String email, int page, int size, String sortBy, String sortDir) {
+        Query query = new Query();
+        if (firstName != null && !firstName.isEmpty()) {
+            query.addCriteria(Criteria.where("firstName").regex(firstName, "i"));
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            query.addCriteria(Criteria.where("lastName").regex(lastName, "i"));
+        }
+        if (email != null && !email.isEmpty()) {
+            query.addCriteria(Criteria.where("email").regex(email, "i"));
+        }
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDir), sortBy);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        long total = mongoTemplate.count(query, Employee.class);
+        query.with(pageable);
+        List<Employee> employees = mongoTemplate.find(query, Employee.class);
+        return new org.springframework.data.domain.PageImpl<>(employees, pageable, total);
+    }
 }
