@@ -61,4 +61,12 @@ public class EmployeeController {
     public void deleteEmployee(@PathVariable String userId) {
         employeeService.deleteEmployee(userId);
     }
+
+    @GetMapping("/profile")
+    public Employee getProfile() {
+        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userId = principal.toString();
+        Optional<Employee> employee = employeeService.getEmployeeById(userId);
+        return employee.orElse(null);
+    }
 }
