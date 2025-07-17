@@ -26,7 +26,7 @@ public class EmployeeController {
             @RequestParam(required = false) String email,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "userId") String sortBy,
+            @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDir
     ) {
         Page<Employee> employees = employeeService.getEmployees(firstName, lastName, email, page, size, sortBy, sortDir);
@@ -38,9 +38,9 @@ public class EmployeeController {
                 .build();
     }
 
-    @GetMapping("/{userId}")
-    public Employee getEmployeeById(@PathVariable String userId) {
-        Optional<Employee> employee = employeeService.getEmployeeById(userId);
+    @GetMapping("/{profileId}")
+    public Employee getEmployeeById(@PathVariable String profileId) {
+        Optional<Employee> employee = employeeService.getEmployeeById(profileId);
         return employee.orElse(null);
     }
 
@@ -48,25 +48,18 @@ public class EmployeeController {
     public Map<String, String> createEmployee(@RequestBody CreateEmployeeRequest request) {
         Employee employee = employeeService.createEmployee(request);
         Map<String, String> response = new HashMap<>();
-        response.put("employeeId", employee.getUserId());
+        response.put("profileId", employee.getId());
+        response.put("userId", employee.getUserId());
         return response;
     }
 
-    @PutMapping("/{userId}")
-    public Employee updateEmployee(@PathVariable String userId, @RequestBody Employee employee) {
-        return employeeService.updateEmployee(userId, employee);
+    @PutMapping("/{profileId}")
+    public Employee updateEmployee(@PathVariable String profileId, @RequestBody Employee employee) {
+        return employeeService.updateEmployee(profileId, employee);
     }
 
-    @DeleteMapping("/{userId}")
-    public void deleteEmployee(@PathVariable String userId) {
-        employeeService.deleteEmployee(userId);
-    }
-
-    @GetMapping("/profile")
-    public Employee getProfile() {
-        Object principal = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String userId = principal.toString();
-        Optional<Employee> employee = employeeService.getEmployeeById(userId);
-        return employee.orElse(null);
+    @DeleteMapping("/{profileId}")
+    public void deleteEmployee(@PathVariable String profileId) {
+        employeeService.deleteEmployee(profileId);
     }
 }

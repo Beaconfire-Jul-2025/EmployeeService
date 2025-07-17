@@ -27,8 +27,15 @@ public class EmployeeService {
         return employeeRepository.findAll();
     }
 
-    public Optional<Employee> getEmployeeById(String userId) {
-        return employeeRepository.findById(userId);
+    public Optional<Employee> getEmployeeById(String profileId) {
+        return employeeRepository.findById(profileId);
+    }
+
+    public Optional<Employee> getEmployeeByUserId(String userId) {
+        Query query = new Query(Criteria.where("userId").is(userId)
+            .and("applicationType").is("profile"));
+        Employee employee = mongoTemplate.findOne(query, Employee.class);
+        return Optional.ofNullable(employee);
     }
 
     public Employee createEmployee(CreateEmployeeRequest request) {
@@ -58,13 +65,13 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
-    public Employee updateEmployee(String userId, Employee employee) {
-        employee.setUserId(userId);
+    public Employee updateEmployee(String profileId, Employee employee) {
+        employee.setId(profileId);
         return employeeRepository.save(employee);
     }
 
-    public void deleteEmployee(String userId) {
-        employeeRepository.deleteById(userId);
+    public void deleteEmployee(String profileId) {
+        employeeRepository.deleteById(profileId);
     }
 
     public Page<Employee> getEmployees(String firstName, String lastName, String email, int page, int size, String sortBy, String sortDir) {

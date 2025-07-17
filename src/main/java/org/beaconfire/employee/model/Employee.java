@@ -2,13 +2,19 @@ package org.beaconfire.employee.model;
 
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.util.Date;
 import java.util.List;
 
+@Document(collection = "employee")
 @Data
 @Builder
 public class Employee {
-    private String userId;
+    @Id
+    private String id; // MongoDB auto-generated _id
+    private String userId; // External userId from MySQL
     private String firstName;
     private String lastName;
     private String middleName;
@@ -31,4 +37,3 @@ public class Employee {
     private List<PersonalDocument> personalDocuments;
     private String applicationType;
 }
-
