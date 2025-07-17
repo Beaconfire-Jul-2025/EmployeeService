@@ -17,5 +17,6 @@ public interface EmployeeRepository extends MongoRepository<Employee, String> {
     List<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName);
     Page<Employee> findByHouseId(String houseId, Pageable pageable);
     Page<Employee> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String firstName, String lastName, Pageable pageable);
+    Optional<Employee> findByUserId(String userId);
 
 }
