@@ -8,6 +8,7 @@ import org.beaconfire.employee.service.EmployeeService;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -39,9 +40,10 @@ public class EmployeeController {
                 .build();
     }
 
-    @GetMapping("/{profileId}")
-    public Employee getEmployeeById(@PathVariable String profileId) {
-        Optional<Employee> employee = employeeService.getEmployeeById(profileId);
+    @GetMapping("/{employeeId}")
+    public Employee getEmployeeById(@PathVariable String employeeId,
+                                    @RequestParam(required = false, defaultValue = "PROFILE") String applicationType) {
+        Optional<Employee> employee = employeeService.getEmployeeByUserId(employeeId, applicationType);
         return employee.orElse(null);
     }
 
