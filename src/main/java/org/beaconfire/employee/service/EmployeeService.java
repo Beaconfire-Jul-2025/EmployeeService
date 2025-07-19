@@ -1,7 +1,7 @@
 package org.beaconfire.employee.service;
 
 import lombok.AllArgsConstructor;
-import org.beaconfire.employee.dto.CreateEmployeeRequest;
+import org.beaconfire.employee.dto.EmployeeDTO;
 import org.beaconfire.employee.model.Employee;
 import org.beaconfire.employee.repository.EmployeeRepository;
 import org.springframework.data.domain.Page;
@@ -44,7 +44,7 @@ public class EmployeeService {
         return Optional.ofNullable(employee);
     }
 
-    public Employee createEmployee(CreateEmployeeRequest request) {
+    public Employee createEmployee(EmployeeDTO request) {
         Employee employee = Employee.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())

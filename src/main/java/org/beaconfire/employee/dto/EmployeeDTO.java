@@ -1,18 +1,13 @@
 package org.beaconfire.employee.dto;
 
 import lombok.Data;
-import org.beaconfire.employee.model.Address;
-import org.beaconfire.employee.model.WorkAuthorization;
-import org.beaconfire.employee.model.DriverLicense;
-import org.beaconfire.employee.model.EmergencyContact;
-import org.beaconfire.employee.model.Reference;
-import org.beaconfire.employee.model.PersonalDocument;
+import org.beaconfire.employee.model.*;
+
 import java.util.Date;
 import java.util.List;
 
 @Data
 public class EmployeeDTO {
-    private String userId;
     private String firstName;
     private String lastName;
     private String middleName;

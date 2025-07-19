@@ -1,7 +1,7 @@
 package org.beaconfire.employee.controller;
 
 import lombok.AllArgsConstructor;
-import org.beaconfire.employee.dto.CreateEmployeeRequest;
+import org.beaconfire.employee.dto.EmployeeDTO;
 import org.beaconfire.employee.dto.PageListResponse;
 import org.beaconfire.employee.model.Employee;
 import org.beaconfire.employee.service.EmployeeService;
@@ -48,7 +48,7 @@ public class EmployeeController {
     }
 
     @PostMapping
-    public Map<String, String> createEmployee(@RequestBody CreateEmployeeRequest request) {
+    public Map<String, String> createEmployee(@RequestBody EmployeeDTO request) {
         Employee employee = employeeService.createEmployee(request);
         Map<String, String> response = new HashMap<>();
         response.put("profileId", employee.getId());
